@@ -1,5 +1,4 @@
-import estimator
-import estimator_without_velocities
+import estimator_ffnn
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils.estimator_checks import check_estimator
 from numpy import save
@@ -9,13 +8,15 @@ import pickle
 #print(check_estimator(estimator.NeatEstimator))
 # Grid search is not working so far
 
-param_grid={'pop_size':[500],
+param_grid={'pop_size':[50, 100, 200],
             'n_generations':[200],
-            'n_games':[10],
-            'connect_add_prob':[0.1, 0.5],
-            "add_node_prob":[0.1, 0.5],
-            "weight_mutate_rate":[0.1, 0.5],
-            "bias_mutate_rate":[0.1, 0.5],
+            'n_games':[100],
+            'error_rate':[0.1],
+            'board_size':[3],
+            'connect_add_prob':[0.1],
+            "add_node_prob":[0.1],
+            "weight_mutate_rate":[0.5],
+            "bias_mutate_rate":[0.1],
             "compatibility_disjoint_coefficient" :[1.0],
             "compatibility_weight_coefficient" : [2.0],
             "compatibility_threshold" : [5]
@@ -31,7 +32,7 @@ param_grid={'pop_size':[10, 20],
             }
 '''
 
-search = GridSearchCV(estimator_without_velocities.NeatEstimatorWithoutVelocities(),
+search = GridSearchCV(estimator_ffnn.NeatEstimatorFFNN(),
                       param_grid,
                       n_jobs=1)
 

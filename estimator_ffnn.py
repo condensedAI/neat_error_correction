@@ -6,7 +6,7 @@ import multiprocessing
 import game
 import visualize
 
-verbose=True
+verbose=False
 
 class NeatEstimatorFFNN(BaseEstimator):
     def __init__(self, pop_size=50,
