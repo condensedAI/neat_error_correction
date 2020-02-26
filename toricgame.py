@@ -62,7 +62,6 @@ class ToricGameEnv(gym.Env):
         # reset action_space
         self.actions = []
 
-
         self.done = self.state.is_terminal()
         self.reward = 0
         if self.done:
@@ -112,7 +111,7 @@ class ToricGameEnv(gym.Env):
         # We're in a terminal state. Reward is 1 if won, -1 if lost
         self.done = True
         self.reward = -1.0 if self.state.has_logical_error(self.initialmoves) else 1.0
-        return self.state.encode(), self.reward, True, {'state': self.state, 'message':"Logical error."}
+        return self.state.encode(), self.reward, True, {'state': self.state, 'message':"No syndrome."}
 
     def _set_initial_errors(self):
         ''' Set random initial errors

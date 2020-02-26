@@ -7,7 +7,7 @@ import neat
 import matplotlib.pyplot as plt
 
 class ToricCodeGame():
-    def __init__(self, board_size = 3, error_rate = 0.01, max_steps = 1000, epsilon=0.5):
+    def __init__(self, board_size, error_rate, max_steps, epsilon):
         self.board_size = board_size
         self.error_rate = error_rate
         self.max_steps = max_steps
@@ -18,20 +18,26 @@ class ToricCodeGame():
 
     # Return the score of the game
     def play(self, nn, verbose=False):
-        fitness = -1
+        fitness = 0
         current_state = self.env.reset()
-        if  verbose:
+        if verbose:
             print("Initial", current_state)
+            print(self.env.done, self.env.state.syndrome_pos)
             self.draw(current_state, 3)
+
 
         # If there is no syndrome in the initial configuration
         # Either we generate a new one containing syndromes
         # Or if there happens to be a logical error, we return a failure
-        while self.env.done:
+        while self.env.done and self.error_rate>0:
             if self.env.reward == -1:
-                return -1
+                return 0
 
             current_state = self.env.reset()
+            if verbose:
+                print("Initial", current_state)
+                print(self.env.done, self.env.state.syndrome_pos)
+                self.draw(current_state, 3)
 
         for step in range(self.max_steps+1):
 
@@ -48,12 +54,13 @@ class ToricCodeGame():
 
             # if no syndromes are present anymore
             if done:
-                #print(step, reward, info)
+                #print(step, (reward+1)/2, info["message"], self.env.initialmoves, self.env.state.action_to_coord(self.env.initialmoves[0]), action)
                 #fitness = float(step)/float(self.max_steps)
 
                 # Reward is 1 if there is no logical error
                 # -1 if there is a logical error
-                fitness = reward
+                fitness = (reward+1)/2
+                #print(fitness)
                 break
 
         return fitness
@@ -82,35 +89,6 @@ class ToricCodeGame():
             action = actions[np.argmax(probs)]
 
         return action
-
-    # Show one game
-    def show(self, nn):
-        print("hey")
-        current_state = self.env.reset()
-
-        print(nn)
-        #self.env.state = self.initial_state
-        #current_state = np.array(self.initial_state)
-        for step in range(self.max_steps):
-            #print(step)
-            # Softmax to normalize output as a probability distribution
-            if self.with_velocities:
-                action = int(nn.activate(current_state)[0]<0.5)
-            else:
-                current_state = current_state[[0,2]]
-                action = int(nn.advance(current_state, self.env.tau, self.env.tau)[0]<0.5)
-
-            current_state, reward, done, info = self.env.step(action)
-            self.env.render()
-            time.sleep(0.1)
-
-            #print(step, done)
-            #print(current_state, env.x_threshold, env.theta_threshold_radians)
-
-            if done:
-                print("Fitness showed: {}".format(float(step)/float(self.max_steps)))
-                break
-
 
 
     def draw(self, array, d = 3):
