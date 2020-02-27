@@ -15,7 +15,7 @@ class ToricGameEnv(gym.Env):
     '''
     metadata = {"render.modes": ["human", "ansi"]}
 
-    def init(self, board_size, error_rate = 0.01):
+    def init(self, board_size, error_rate):
         """
         Args:
             opponent: Fixed
@@ -43,7 +43,7 @@ class ToricGameEnv(gym.Env):
         # Empty State
         self.state = Board(self.board_size)
         # reset the board during initialization
-        self.reset()
+        self.reset(error_rate)
 
     def seed(self, seed=None):
         self.np_random, seed1 = seeding.np_random(seed)
@@ -51,7 +51,10 @@ class ToricGameEnv(gym.Env):
         seed2 = seeding.hash_seed(seed1 + 1) % 2**32
         return [seed1, seed2]
 
-    def reset(self):
+    def reset(self, error_rate):
+        # Initialize the error rate
+        self.error_rate = error_rate
+
         # Let the opponent do it's initial evil
         self.state.reset()
         self.moves = []

@@ -8,8 +8,8 @@ import visualize
 class NeatFFNN():
     def __init__(self, config):
         self.config = config
-        self.d = config["distance"]
-        self.error_rate = config["error_rate"]
+        self.d = config["Physics"]["distance"]
+        self.error_rate = config["Physics"]["error_rate"]
         self.n_generations = config["Training"]["n_generations"]
         self.n_games = config["Training"]["n_games"]
         self.max_steps = config["Training"]["max_steps"]
@@ -65,7 +65,7 @@ class NeatFFNN():
         print('Time to reach solution: {}'.format(len(stats.generation_statistics)))
         print('\nBest genome:\n{!s}'.format(winner))
 
-        if verbose:
+        if verbose >1:
             # Show output of the most fit genome against training data.
             #pass
             visualize.plot_stats(stats, ylog=False, view=True)

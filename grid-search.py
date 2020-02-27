@@ -1,18 +1,24 @@
-import estimator_ffnn
-from sklearn.model_selection import GridSearchCV
-from sklearn.utils.estimator_checks import check_estimator
-from numpy import save
+from numpy import mean, std
 from datetime import datetime
 import pickle
+import itertools
+import argparse, os
 
-#print(check_estimator(estimator.NeatEstimator))
-# Grid search is not working so far
+import train
+import config as cf
 
-param_grid={'pop_size':[50, 100, 200],
-            'n_generations':[200],
+config = cf.get_default_config()
+
+# Number of cross-validation
+n_runs = 5
+
+# Grid-search parameters
+param_grid={'pop_size':[100],
+            'n_generations':[100],
             'n_games':[100],
-            'error_rate':[0.1],
-            'board_size':[3],
+            #'error_rate':[0.01, 0.05, 0.1, 0.15],
+            'error_rate':[0.01, 0.05, 0.1, 0.15],
+            'distance':[3],
             'connect_add_prob':[0.1],
             "add_node_prob":[0.1],
             "weight_mutate_rate":[0.5],
@@ -22,32 +28,58 @@ param_grid={'pop_size':[50, 100, 200],
             "compatibility_threshold" : [5]
             }
 
-'''
-param_grid={'pop_size':[10, 20],
-            'n_generations':[100],
-            'n_games':[1],
-            'with_velocities':[False],
-            'connect_add_prob':[0.1],
-            "add_node_prob":[0.1]
-            }
-'''
+# Create the parameter to loop over
+keys=[]
+parameters=[]
+for k, v in param_grid.items():
+    if len(v)==1:
+        config[cf.key_to_section(k)][k] = v[0]
+    else:
+        keys+=[k]
+        parameters+=[v]
 
-search = GridSearchCV(estimator_ffnn.NeatEstimatorFFNN(),
-                      param_grid,
-                      n_jobs=1)
+parameters = list(itertools.product(*parameters))
 
-dummy=list(range(10))
-search.fit(dummy, dummy)
-print(search.best_params_)
+parser = argparse.ArgumentParser()
+parser.add_argument("-dir", "--saveDir", help="Config file to load (overrides other settings)")
+parser.add_argument("--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
+parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2], default=0, help="Level of verbose output (higher is more)")
+args = parser.parse_args()
 
-# Change the config file according to the given parameters
-dt = datetime.today()
-unique_id="{}{}{}{}{}".format(dt.year, dt.month, dt.day, dt.hour, dt.minute)
+if args.saveDir is None or os.path.exists(args.saveDir):
+    raise ValueError("Need a directory path or one that is not already existing")
+else:
+    rootdir = "output/grid-search-%s"%args.saveDir
+    os.mkdir(rootdir)
 
-filename="output/results-{}.pkl".format(unique_id)
+# Initialize the results dictionary
+results={"mean_fitness":[], "std_fitness":[], "config":[]}
+for n in range(n_runs):
+    results["run%i_fitness"%n] = []
+for key in keys:
+    results["param_%s"%key] = []
 
-print(search.cv_results_)
+# Launch the grid search
+for i, param in enumerate(parameters):
+    # Create configuration file
+    for n, v in enumerate(list(param)):
+        config[cf.key_to_section(keys[n])][keys[n]] = v
+        results["param_"+keys[n]].append(v)
 
-f = open(filename,"wb")
-pickle.dump(search.cv_results_,f)
-f.close()
+    results["config"].append(config)
+
+    savedir = "%s/set%i"%(rootdir, i)
+    set_results=[]
+    for n in range(n_runs):
+        result = train.simulate(config, savedir, args.numParallelJobs, args.verbose)
+        results["run%i_fitness"%n].append(result)
+        set_results.append(result)
+
+    # Aggregate the results
+    results["mean_fitness"].append(mean(set_results))
+    results["std_fitness"].append(std(set_results))
+
+print(results)
+filename="%s/results.pkl"%rootdir
+with open(filename,"wb") as f:
+    pickle.dump(results,f)
