@@ -7,6 +7,8 @@ import os
 def simulate(config, savedir, n_jobs, verbose):
     time_id = datetime.now()
 
+    savedir = "output/%s"%savedir.replace("output/", "")
+
     # In case the directory already exist and a configuration file also
     # We just load it
     if savedir is not None and os.path.exists(savedir):
@@ -42,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2], default=0, help="Level of verbose output (higher is more)")
     parser.add_argument("-L", "--distance", type=int, choices=[3,5,7], default=3, help="Toric Code Distance")
-    parser.add_argument("--errorRate", type=float, default=0.1, help="Qubit error rate")
+    parser.add_argument("--errorRates", type=float, nargs="+", default=[0.01, 0.05, 0.1, 0.15], help="Qubit error rate")
     parser.add_argument("--numGenerations", type=int, default=100, help="Number of simulated generations")
     parser.add_argument("--numPuzzles", type=int, default=100, help="Number of syndrome configurations to solve per individual")
     parser.add_argument("--maxSteps", type=int, default=1000, help="Number of maximum qubits flips to solve syndromes")
@@ -60,11 +62,11 @@ if __name__ == "__main__":
     config = {
         "Physics": {
             "distance" : args.distance,
-            "error_rate" : args.errorRate, # Should be removed at some point
-        }
+            },
 
         "Training" : {
             "n_generations" : args.numGenerations,
+            "error_rates" : args.errorRates,
             "n_games" : args.numPuzzles,
             "max_steps" : args.maxSteps,
             "epsilon": args.epsilon
@@ -81,4 +83,4 @@ if __name__ == "__main__":
         }
     }
 
-    simulate(config, args.saveDir, args.numParallelJobs, num.verbose)
+    simulate(config, args.saveDir, args.numParallelJobs, args.verbose)

@@ -7,20 +7,19 @@ import neat
 import matplotlib.pyplot as plt
 
 class ToricCodeGame():
-    def __init__(self, board_size, error_rate, max_steps, epsilon, discard_empty=True):
+    def __init__(self, board_size, max_steps, epsilon, discard_empty=True):
         self.board_size = board_size
-        self.error_rate = error_rate
         self.max_steps = max_steps
         self.epsilon = epsilon
         self.discard_empty = discard_empty
 
         self.env = toricgame.ToricGameEnv()
-        self.env.init(self.board_size, self.error_rate)
+        self.env.init(self.board_size)
 
     # Return the score of the game
-    def play(self, nn, verbose=False):
+    def play(self, nn, error_rate, verbose=False):
         fitness = 0
-        current_state = self.env.reset()
+        current_state = self.env.reset(error_rate)
         if verbose:
             print("Initial", current_state)
             print(self.env.done, self.env.state.syndrome_pos)
@@ -30,15 +29,18 @@ class ToricCodeGame():
         # If there is no syndrome in the initial configuration
         # Either we generate a new one containing syndromes
         # Or if there happens to be a logical error, we return a failure
-        while self.env.done and self.error_rate>0 and self.discard_empty:
+        while self.env.done and error_rate>0 and self.discard_empty:
             if self.env.reward == -1:
                 return 0
 
-            current_state = self.env.reset()
+            current_state = self.env.reset(error_rate)
             if verbose:
                 print("Initial", current_state)
                 print(self.env.done, self.env.state.syndrome_pos)
                 self.draw(current_state, 3)
+
+        if not self.discard_empty and self.env.done:
+            return (self.env.reward+1)/2
 
         for step in range(self.max_steps+1):
 
