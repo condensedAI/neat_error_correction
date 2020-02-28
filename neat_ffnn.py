@@ -9,7 +9,7 @@ class NeatFFNN():
     def __init__(self, config):
         self.config = config
         self.d = config["Physics"]["distance"]
-        self.error_rate = config["Physics"]["error_rate"]
+        self.error_rates = config["Training"]["error_rates"]
         self.n_generations = config["Training"]["n_generations"]
         self.n_games = config["Training"]["n_games"]
         self.max_steps = config["Training"]["max_steps"]
@@ -33,21 +33,23 @@ class NeatFFNN():
             new_file.write(data)
             new_file.close()
 
-
-    def run(self, savedir, n_cores=1, verbose=0):
+    def run(self, savedir, n_cores=1, loading_file=None, verbose=0):
         time_id = datetime.now()
 
-        self.game = game.ToricCodeGame(self.d, self.error_rate, self.max_steps, self.epsilon)
+        self.game = game.ToricCodeGame(self.d, self.max_steps, self.epsilon)
 
-        # Load configuration.
-        self.generate_config_file(savedir)
+        if loading_file is None:
+            # Generate configuration file
+            self.generate_config_file(savedir)
 
-        population_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                             neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                             savedir+"/population-config")
+            population_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                 neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                 savedir+"/population-config")
 
-        # Create the population, which is the top-level object for a NEAT run.
-        p = neat.Population(population_config)
+            # Create the population, which is the top-level object for a NEAT run.
+            p = neat.Population(population_config)
+        else:
+            p = neat.Checkpointer.restore_checkpoint(loading_file)
 
         if verbose:
             # Add a stdout reporter to show progress in the terminal.
@@ -57,6 +59,9 @@ class NeatFFNN():
 
         stats = neat.StatisticsReporter()
         p.add_reporter(stats)
+        p.add_reporter(neat.Checkpointer(generation_interval=self.n_generations/2,
+                                         time_interval_seconds=600,
+                                         filename_prefix="%s/checkpoint-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
 
         pe = neat.ParallelEvaluator(n_cores, self.eval_genome)
         winner = p.run(pe.evaluate, self.n_generations)
@@ -88,6 +93,7 @@ class NeatFFNN():
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         fitness = 0
         for i in range(self.n_games):
-            #print(self.game.play(net))
-            fitness += self.game.play(net)
+            # Create puzzles of varying difficulties
+            error_rate = self.error_rates[i%len(self.error_rates)]
+            fitness += self.game.play(net, error_rate)
         return fitness / self.n_games

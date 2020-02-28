@@ -15,14 +15,13 @@ class ToricGameEnv(gym.Env):
     '''
     metadata = {"render.modes": ["human", "ansi"]}
 
-    def init(self, board_size, error_rate):
+    def init(self, board_size):
         """
         Args:
             opponent: Fixed
             board_size: board_size of the board to use
         """
         self.board_size = board_size
-        self.error_rate = error_rate
 
         self.seed()
 
@@ -43,7 +42,7 @@ class ToricGameEnv(gym.Env):
         # Empty State
         self.state = Board(self.board_size)
         # reset the board during initialization
-        self.reset(error_rate)
+        self.reset(0)
 
     def seed(self, seed=None):
         self.np_random, seed1 = seeding.np_random(seed)

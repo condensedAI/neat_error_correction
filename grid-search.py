@@ -10,7 +10,7 @@ import config as cf
 config = cf.get_default_config()
 
 # Number of cross-validation
-n_runs = 1
+n_runs = 2
 
 # Grid-search parameters
 param_grid={'pop_size':[200],
