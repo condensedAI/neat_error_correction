@@ -61,7 +61,7 @@ if __name__ == "__main__":
         "Physics": {
             "distance" : args.distance,
             "error_rate" : args.errorRate, # Should be removed at some point
-        }
+        },
 
         "Training" : {
             "n_generations" : args.numGenerations,

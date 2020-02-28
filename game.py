@@ -20,7 +20,7 @@ class ToricCodeGame():
     # Return the score of the game
     def play(self, nn, verbose=False):
         fitness = 0
-        current_state = self.env.reset()
+        current_state = self.env.reset(self.error_rate)
         if verbose:
             print("Initial", current_state)
             print(self.env.done, self.env.state.syndrome_pos)
@@ -34,7 +34,7 @@ class ToricCodeGame():
             if self.env.reward == -1:
                 return 0
 
-            current_state = self.env.reset()
+            current_state = self.env.reset(self.error_rate)
             if verbose:
                 print("Initial", current_state)
                 print(self.env.done, self.env.state.syndrome_pos)
