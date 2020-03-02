@@ -45,16 +45,23 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     fitness = []
     # /TODO\ Parallelize this part
+    results={"fitness":[], "error_rate":[], "outcome":[], "nsteps":[]}
     for error_rate in error_rates:
         fitness.append(0)
         for i in range(n_games):
-            fitness[-1] += game.play(net, error_rate)
+            result = game.play(net, error_rate)
+            fitness[-1] += result["fitness"]
+
+            for k, v in result.items():
+                results[k].append(v)
+
         fitness[-1] /= n_games
 
     elapsed = datetime.now() - time_id
     print("Total running time:", elapsed.seconds,":",elapsed.microseconds)
 
     # Always overwrite the result of evaluation
+    # Synthesis report
     savefile = "%s_evaluation.ngames=%i.csv"%(file.replace(".pkl", ""), n_games)
     if os.path.exists(savefile):
         print("Deleting evaluation file %s"%savefile)
@@ -63,6 +70,15 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     print([error_rates, fitness])
     df = pd.DataFrame(list(zip(error_rates, fitness)), columns=["error_rate", "mean_fitness"])
     df.to_csv(savefile)
+
+    # Detailed report
+    savefile = "%s_detailed_results_evaluation.ngames=%i.csv"%(file.replace(".pkl", ""), n_games)
+    if os.path.exists(savefile):
+        print("Deleting evaluation file %s"%savefile)
+        os.remove(savefile)
+
+    pd.DataFrame.from_dict(results).to_csv(savefile)
+
 
     return error_rates, fitness
 
@@ -73,7 +89,7 @@ if __name__ == "__main__":
     parser.add_argument("--errorRates", type=float, nargs="+", default=[0.01, 0.05, 0.1, 0.15], help="Qubit error rate")
     parser.add_argument("--numPuzzles", type=int, default=100, help="Number of syndrome configurations to solve per individual")
     #parser.add_argument("--maxSteps", type=int, default=1000, help="Number of maximum qubits flips to solve syndromes")
-    parser.add_argument("--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
+    parser.add_argument("-j", "--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2], default=0, help="Level of verbose output (higher is more)")
     args = parser.parse_args()
 

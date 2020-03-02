@@ -31,7 +31,7 @@ class ToricCodeGame():
         # Or if there happens to be a logical error, we return a failure
         while self.env.done and error_rate>0 and self.discard_empty:
             if self.env.reward == -1:
-                return 0
+                return {"fitness":0, "error_rate": error_rate, "outcome":"logical_error", "nsteps":0}
 
             current_state = self.env.reset(error_rate)
             if verbose:
@@ -40,7 +40,10 @@ class ToricCodeGame():
                 self.draw(current_state, 3)
 
         if not self.discard_empty and self.env.done:
-            return (self.env.reward+1)/2
+            if self.env.reward == -1:
+                return {"fitness":0, "error_rate": error_rate, "outcome":"logical_error", "nsteps":0}
+            else:
+                return {"fitness":1, "error_rate": error_rate, "outcome":"success", "nsteps":0}
 
         for step in range(self.max_steps+1):
 
@@ -62,11 +65,12 @@ class ToricCodeGame():
 
                 # Reward is 1 if there is no logical error
                 # -1 if there is a logical error
-                fitness = (reward+1)/2
+                return {"fitness":(reward+1)/2, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
+
                 #print(fitness)
                 break
 
-        return fitness
+        return {"fitness":0, "error_rate": error_rate, "outcome":"max_steps", "nsteps":max_step}
 
     def generate_perspectives(self, current_state, nn):
         actions=[]
