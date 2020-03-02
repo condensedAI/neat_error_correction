@@ -95,5 +95,5 @@ class NeatFFNN():
         for i in range(self.n_games):
             # Create puzzles of varying difficulties
             error_rate = self.error_rates[i%len(self.error_rates)]
-            fitness += self.game.play(net, error_rate)
+            fitness += self.game.play(net, error_rate)["fitness"]
         return fitness / self.n_games

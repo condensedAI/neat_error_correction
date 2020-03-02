@@ -95,25 +95,27 @@ class ToricGameEnv(gym.Env):
         # If already terminal, then don't do anything, count as win
         if self.done:
             self.reward = 1
-            return self.state.encode(), 1., True, {'state': self.state, 'message':"No errors."}
+            return self.state.encode(), 1., True, {'state': self.state, 'message':"success"}
 
         self.actions.append(action)
 
         try:
             self.state.act(action)
         except error.Error:
-            return self.state.encode(), -1.0, True, {'state': self.state, 'message': "Illegal action."}
+            return self.state.encode(), -1.0, True, {'state': self.state, 'message': "illegal_action"}
 
         # Reward: if nonterminal, then the reward is 0
         if not self.state.is_terminal():
             self.done = False
             self.reward = 0
-            return self.state.encode(), 0., False, {'state': self.state, 'message':"Continue"}
+            return self.state.encode(), 0., False, {'state': self.state, 'message':"continue"}
 
         # We're in a terminal state. Reward is 1 if won, -1 if lost
         self.done = True
-        self.reward = -1.0 if self.state.has_logical_error(self.initialmoves) else 1.0
-        return self.state.encode(), self.reward, True, {'state': self.state, 'message':"No syndrome."}
+        if self.state.has_logical_error(self.initialmoves):
+            return self.state.encode(), -1.0, True, {'state': self.state, 'message':"logical_error"}
+        else:
+            return self.state.encode(), 1.0, True, {'state': self.state, 'message':"success"}
 
     def _set_initial_errors(self):
         ''' Set random initial errors
