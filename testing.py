@@ -30,16 +30,22 @@ def run2D(size=4,p=0.1):
 
    return L.measure_logical()
 
+np.random.seed(12345)
+
 curve = []
 pXs = np.arange(0.01, 0.15, 0.01)
 for p in pXs:
-    print(p)
-    count = 200
-    for i in range(200):
+    numGames = 1000
+
+    res = 0
+    for i in range(numGames):
         result = run2D(5,p)
+
         if (result[0][0] == -1) or (result[0][1] == -1):
-            count -= 1
-    curve.append( count/200 )
-    print(count/200)
+            continue
+
+        res += 1.0
+
+    curve.append( res/numGames )
 
 np.savetxt("mwpm-snapshot-d5-200.txt", np.column_stack([pXs,curve]))

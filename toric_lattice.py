@@ -83,13 +83,13 @@ class PlanarLattice:
         The qubit values in self.array are updated.
         """
         for q0,q1 in self.positions_Q:
-            rand1=random.random()
-            rand2=random.random()
+            rand1=np.random.rand()
+            #rand2=np.random.rand()
 
             if rand1<pX:
                 self.array[q0][q1][0]*=-1
-            if rand2<pZ:
-                self.array[q0][q1][1]*=-1
+            #if rand2<pZ:
+            #    self.array[q0][q1][1]*=-1
 
     def measurePlaquettes(self):
         """ Calculates the value of each plaquette stabilizer

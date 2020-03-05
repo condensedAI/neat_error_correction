@@ -13,7 +13,6 @@ class ToricGameEnv(gym.Env):
     '''
     ToricGameEnv environment. Effective single player game.
     '''
-    metadata = {"render.modes": ["human", "ansi"]}
 
     def init(self, board_size):
         """
@@ -35,14 +34,14 @@ class ToricGameEnv(gym.Env):
         # So the observation space is 2*d**2. But that's hard to implement,
         # hence we go for 4*d**2, and ignore some
         shape = (2*self.board_size, 2*self.board_size) # board_size * board_size
-        self.observation_space = spaces.Box(np.zeros(shape), np.ones(shape))
+        #self.observation_space = spaces.Box(np.zeros(shape), np.ones(shape))
 
         # Keep track of the moves
         self.moves = []
         # Empty State
         self.state = Board(self.board_size)
         # reset the board during initialization
-        self.reset(0)
+        # self.reset(0)
 
     def seed(self, seed=None):
         self.np_random, seed1 = seeding.np_random(seed)
@@ -124,9 +123,10 @@ class ToricGameEnv(gym.Env):
         # Pick random sites according to error rate
         #print("Setting initial errors")
         for i,m in enumerate(self.state.qubit_pos):
-            if np.random.rand() < self.error_rate:
+            rand1 = np.random.rand()
+            if rand1 < self.error_rate:
                 self.moves.append( i )
-                self.state.act(self.state.action_to_coord(i), init=True)
+                self.state.act(m, init=True)
 
         # Now unflip the qubits, they're a secret
         for q in self.state.qubit_pos:
@@ -135,7 +135,6 @@ class ToricGameEnv(gym.Env):
         self.state.move = 0
         self.state.last_coord = (-1,-1)     # last action coord
         self.state.last_action = None       # last action made
-
 
 class Board(object):
     '''
@@ -237,7 +236,6 @@ class Board(object):
             plaqs = [ [ (coord[0] + 1) % (2*self.size), coord[1] ], [ (coord[0] - 1) % (2*self.size), coord[1] ] ]
         else:
             plaqs = [ [ coord[0], (coord[1] + 1) % (2*self.size) ], [ coord[0], (coord[1] - 1) % (2*self.size) ] ]
-
 
         # Update syndrome positions
         for plaq in plaqs:
