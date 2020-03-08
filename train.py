@@ -1,4 +1,4 @@
-from neat_ffnn import NeatFFNN
+from ffnn_population import FFNNPopulation
 from datetime import datetime
 import argparse, json
 from glob import glob
@@ -9,7 +9,8 @@ from numpy import argmax
 def simulate(config, savedir, n_jobs, loading_mode, verbose):
     time_id = datetime.now()
 
-    savedir = "output/%s"%savedir.replace("output/", "")
+    if not savedir is None:
+        savedir = "output/%s"%savedir.replace("output/", "")
     ckpt_file = None
 
     # In case the directory already exist and a configuration file also
@@ -39,9 +40,9 @@ def simulate(config, savedir, n_jobs, loading_mode, verbose):
             json.dump(config, f, indent=4)
 
 
-    game = NeatFFNN(config)
+    population = FFNNPopulation(config)
 
-    results = game.run(savedir, n_jobs, ckpt_file, verbose)
+    results = population.evolve(savedir, n_jobs, ckpt_file, verbose)
 
     elapsed = datetime.now() - time_id
     print("Total running time:", elapsed.seconds,":",elapsed.microseconds)

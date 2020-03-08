@@ -8,16 +8,19 @@ import numpy as np
 import neat
 
 from game import ToricCodeGame
+from simple_feed_forward import SimpleFeedForwardNetwork
 
 
 def evaluate(file, error_rates, n_games, n_jobs, verbose):
     time_id = datetime.now()
 
+    np.random.seed(0)
+
     # Load the corresponding config files
     savedir = file[:file.rfind("/")]
 
     if not os.path.exists("%s/config.json"%savedir):
-        raise ValueError("Configuration file does not exist.")
+        raise ValueError("Configuration file does not exist (%s)."%("%s/config.json"%savedir))
 
     with open("%s/config.json"%savedir) as f:
         config = json.load(f)
@@ -25,7 +28,8 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     # Create a game
     game = ToricCodeGame(board_size=config["Physics"]["distance"],
                            max_steps=config["Training"]["max_steps"],
-                           epsilon=config["Training"]["epsilon"],
+                           #epsilon=config["Training"]["epsilon"],
+                           epsilon=0,
                            discard_empty=False)
 
     # Load the genome to be evaluated
@@ -42,20 +46,24 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          "%s/population-config"%savedir)
 
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    #net = neat.nn.FeedForwardNetwork.create(genome, config)
+    net = SimpleFeedForwardNetwork.create(genome, config)
+
     fitness = []
     # /TODO\ Parallelize this part
     results={"fitness":[], "error_rate":[], "outcome":[], "nsteps":[]}
     for error_rate in error_rates:
         fitness.append(0)
         for i in range(n_games):
-            result = game.play(net, error_rate)
+            result = game.play(net, error_rate, verbose)
             fitness[-1] += result["fitness"]
+            #print("Result", i, result)
 
             for k, v in result.items():
                 results[k].append(v)
 
         fitness[-1] /= n_games
+        print("Evaluation on error_rate=%.2f is done."%error_rate)
 
     elapsed = datetime.now() - time_id
     print("Total running time:", elapsed.seconds,":",elapsed.microseconds)
