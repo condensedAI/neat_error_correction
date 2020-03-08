@@ -4,8 +4,9 @@ import pickle
 
 import game
 import visualize
+from simple_feed_forward import SimpleFeedForwardNetwork
 
-class NeatFFNN():
+class FFNNPopulation():
     def __init__(self, config):
         self.config = config
         self.d = config["Physics"]["distance"]
@@ -20,11 +21,12 @@ class NeatFFNN():
         with open('config-toric-code-template-ffnn') as file:
             data = file.read()
 
-            data = data.replace("{num_inputs}", str(4*self.d*self.d))
+            #data = data.replace("{num_inputs}", str(4*self.d*self.d))
+            data = data.replace("{num_inputs}", str(3*self.d*self.d))
 
             # Loop over the parameters of the simulation
             for param_name, param_value in self.config["Population"].items():
-                # Attributes like game or with_velocities do not appear in config template
+                # Attributes like n_games or epsilon do not appear in config template
                 # So no need to check
                 data = data.replace("{"+param_name+"}", str(param_value))
 
@@ -33,7 +35,7 @@ class NeatFFNN():
             new_file.write(data)
             new_file.close()
 
-    def run(self, savedir, n_cores=1, loading_file=None, verbose=0):
+    def evolve(self, savedir, n_cores=1, loading_file=None, verbose=0):
         time_id = datetime.now()
 
         self.game = game.ToricCodeGame(self.d, self.max_steps, self.epsilon)
@@ -67,7 +69,6 @@ class NeatFFNN():
         winner = p.run(pe.evaluate, self.n_generations)
 
         # Display the winning genome.
-        print('Time to reach solution: {}'.format(len(stats.generation_statistics)))
         print('\nBest genome:\n{!s}'.format(winner))
 
         if verbose >1:
@@ -90,7 +91,8 @@ class NeatFFNN():
         #return len(stats.generation_statistics)
 
     def eval_genome(self, genome, config):
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
+        #net = neat.nn.FeedForwardNetwork.create(genome, config)
+        net = SimpleFeedForwardNetwork.create(genome, config)
         fitness = 0
         for i in range(self.n_games):
             # Create puzzles of varying difficulties
