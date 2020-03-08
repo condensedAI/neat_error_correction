@@ -5,11 +5,11 @@ def get_default_config():
     return {
         "Physics": {
             "distance" : 3,
-            "error_rate" : 0.1, # Should be removed at some point
         },
 
         "Training" : {
             "n_generations" : 100,
+            "error_rates" : [0.01, 0.05, 0.1, 0.15],
             "n_games" : 100,
             "max_steps" : 1000,
             "epsilon": 0.1
@@ -27,9 +27,9 @@ def get_default_config():
 }
 
 def key_to_section(key):
-    if key in ["distance", "error_rate"]:
+    if key in ["distance"]:
         return "Physics"
-    if key in ["n_generations", "n_games", "max_steps", "epsilon"]:
+    if key in ["n_generations", "n_games", "max_steps", "epsilon", "error_rates"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",

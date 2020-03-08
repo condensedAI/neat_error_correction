@@ -25,7 +25,7 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     # Create a game
     game = ToricCodeGame(board_size=config["Physics"]["distance"],
                            max_steps=config["Training"]["max_steps"],
-                           epsilon=config["Training"]["epsilon"],
+                           epsilon=0, #epsilon=config["Training"]["epsilon"],
                            discard_empty=False)
 
     # Load the genome to be evaluated
@@ -56,6 +56,7 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
                 results[k].append(v)
 
         fitness[-1] /= n_games
+        print("Evaluation on error_rate=%.2f is done."%error_rate)
 
     elapsed = datetime.now() - time_id
     print("Total running time:", elapsed.seconds,":",elapsed.microseconds)
