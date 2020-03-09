@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--numPuzzles", type=int, default=100, help="Number of syndrome configurations to solve per individual")
     parser.add_argument("--maxSteps", type=int, default=1000, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("--epsilon", type=float, default=0.1, help="Epsilon of the greedy search among perspectives results")
-    parser.add_argument("--populationSize", type=int, default=50, help="Size of the population")
+    parser.add_argument("--populationSize", type=int, default=100, help="Size of the population")
     parser.add_argument("--connectAddProb", type=float, default=0.1, help="Probability of adding a new connection")
     parser.add_argument("--addNodeProb", type=float, default=0.1, help="Probability of adding a new node")
     parser.add_argument("--weightMutateRate", type=float, default=0.5, help="Mutation rate for the weights")

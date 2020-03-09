@@ -7,7 +7,8 @@ import numpy as np
 
 import neat
 
-from game import ToricCodeGame
+from game import *
+
 from simple_feed_forward import SimpleFeedForwardNetwork
 
 
@@ -28,8 +29,7 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     # Create a game
     game = ToricCodeGame(board_size=config["Physics"]["distance"],
                            max_steps=config["Training"]["max_steps"],
-                           epsilon=0, #epsilon=config["Training"]["epsilon"],
-                           discard_empty=False)
+                           epsilon=0)
 
     # Load the genome to be evaluated
     if not os.path.exists(file):
@@ -54,7 +54,7 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     for error_rate in error_rates:
         fitness.append(0)
         for i in range(n_games):
-            result = game.play(net, error_rate, verbose)
+            result = game.play(net, error_rate, GameMode.EVALUATION)
             fitness[-1] += result["fitness"]
             #print("Result", i, result)
 

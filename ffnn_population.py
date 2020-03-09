@@ -2,7 +2,7 @@ import neat
 from datetime import datetime
 import pickle
 
-import game
+from game import *
 import visualize
 from simple_feed_forward import SimpleFeedForwardNetwork
 
@@ -38,7 +38,7 @@ class FFNNPopulation():
     def evolve(self, savedir, n_cores=1, loading_file=None, verbose=0):
         time_id = datetime.now()
 
-        self.game = game.ToricCodeGame(self.d, self.max_steps, self.epsilon)
+        self.game = ToricCodeGame(self.d, self.max_steps, self.epsilon)
 
         if loading_file is None:
             # Generate configuration file
@@ -97,5 +97,5 @@ class FFNNPopulation():
         for i in range(self.n_games):
             # Create puzzles of varying difficulties
             error_rate = self.error_rates[i%len(self.error_rates)]
-            fitness += self.game.play(net, error_rate)["fitness"]
+            fitness += self.game.play(net, error_rate, GameMode.TRAINING)["fitness"]
         return fitness / self.n_games
