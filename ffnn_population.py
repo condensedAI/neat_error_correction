@@ -2,7 +2,9 @@ import neat
 from datetime import datetime
 import pickle
 
-from game import *
+from game import ToricCodeGame
+from genome_checkpointer import GenomeCheckpointer
+from config import *
 import visualize
 from simple_feed_forward import SimpleFeedForwardNetwork
 
@@ -11,6 +13,7 @@ class FFNNPopulation():
         self.config = config
         self.d = config["Physics"]["distance"]
         self.error_rates = config["Training"]["error_rates"]
+        self.error_mode = config["Training"]["error_mode"]
         self.n_generations = config["Training"]["n_generations"]
         self.n_games = config["Training"]["n_games"]
         self.max_steps = config["Training"]["max_steps"]
@@ -42,6 +45,7 @@ class FFNNPopulation():
 
         if loading_file is None:
             # Generate configuration file
+            # TODO: No need to generate population config file each time
             self.generate_config_file(savedir)
 
             population_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -64,6 +68,9 @@ class FFNNPopulation():
         p.add_reporter(neat.Checkpointer(generation_interval=self.n_generations/2,
                                          time_interval_seconds=600,
                                          filename_prefix="%s/checkpoint-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
+        p.add_reporter(GenomeCheckpointer(generation_interval=100,
+                                         filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
+
 
         pe = neat.ParallelEvaluator(n_cores, self.eval_genome)
         winner = p.run(pe.evaluate, self.n_generations)
@@ -97,5 +104,5 @@ class FFNNPopulation():
         for i in range(self.n_games):
             # Create puzzles of varying difficulties
             error_rate = self.error_rates[i%len(self.error_rates)]
-            fitness += self.game.play(net, error_rate, GameMode.TRAINING)["fitness"]
+            fitness += self.game.play(net, error_rate, self.error_mode, GameMode["TRAINING"], 0)["fitness"]
         return fitness / self.n_games

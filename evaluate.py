@@ -7,15 +7,15 @@ import numpy as np
 
 import neat
 
-from game import *
-
+from config import GameMode
+from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 
 
-def evaluate(file, error_rates, n_games, n_jobs, verbose):
+def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
     time_id = datetime.now()
 
-    np.random.seed(0)
+    #np.random.seed(0)
 
     # Load the corresponding config files
     savedir = file[:file.rfind("/")]
@@ -49,12 +49,12 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
     net = SimpleFeedForwardNetwork.create(genome, config)
 
     fitness = []
-    # /TODO\ Parallelize this part
+    # TODO: Parallelize this part
     results={"fitness":[], "error_rate":[], "outcome":[], "nsteps":[]}
     for error_rate in error_rates:
         fitness.append(0)
         for i in range(n_games):
-            result = game.play(net, error_rate, GameMode.EVALUATION)
+            result = game.play(net, error_rate, error_mode, GameMode["EVALUATION"])
             fitness[-1] += result["fitness"]
             #print("Result", i, result)
 
@@ -69,7 +69,7 @@ def evaluate(file, error_rates, n_games, n_jobs, verbose):
 
     # Always overwrite the result of evaluation
     # Synthesis report
-    savefile = "%s_evaluation.ngames=%i.csv"%(file.replace(".pkl", ""), n_games)
+    savefile = "%s_evaluation.ngames=%i.errormode=%i.csv"%(file.replace(".pkl", ""), n_games, error_mode)
     if os.path.exists(savefile):
         print("Deleting evaluation file %s"%savefile)
         os.remove(savefile)
@@ -93,12 +93,13 @@ if __name__ == "__main__":
     # Parse arguments passed to the program (or set defaults)
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", nargs="+", help="Genome file to load and evaluate")
-    parser.add_argument("--errorRates", type=float, nargs="+", default=[0.01, 0.05, 0.1, 0.15], help="Qubit error rate")
-    parser.add_argument("--numPuzzles", type=int, default=100, help="Number of syndrome configurations to solve per individual")
+    parser.add_argument("--errorRates", type=float, nargs="+", default=np.arange(0.01, 0.16, 0.01), help="Qubit error rate")
+    parser.add_argument("--errorMode", type=int, choices=[1,2], default=1, help="Error generation mode")
+    parser.add_argument("-n", "--numPuzzles", type=int, default=1000, help="Number of syndrome configurations to solve per individual")
     #parser.add_argument("--maxSteps", type=int, default=1000, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("-j", "--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2], default=0, help="Level of verbose output (higher is more)")
     args = parser.parse_args()
 
     for file in args.file:
-        evaluate(file, args.errorRates, args.numPuzzles, args.numParallelJobs, args.verbose)
+        evaluate(file, args.errorRates, args.errorMode, args.numPuzzles, args.numParallelJobs, args.verbose)
