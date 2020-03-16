@@ -6,6 +6,8 @@ from gym.utils import seeding
 import sys, os
 import matplotlib.pyplot as plt
 
+from config import ErrorMode
+
 ### Environment
 class ToricGameEnv(gym.Env):
     '''
@@ -36,14 +38,14 @@ class ToricGameEnv(gym.Env):
         seed2 = seeding.hash_seed(seed1 + 1) % 2**32
         return [seed1, seed2]
 
-    def generate_errors(self, error_rate):
+    def generate_errors(self, error_rate, mode):
         # Reset the board state
         self.state.reset()
 
         # Let the opponent do it's initial evil
         self.qubits_flips = []
         self.initial_qubits_flips = []
-        self._set_initial_errors(error_rate)
+        self._set_initial_errors(error_rate, mode)
 
         #print("Initial errors", self.initial_qubits_flips)
 
@@ -124,16 +126,28 @@ class ToricGameEnv(gym.Env):
         else:
             return self.state.encode(), 1.0, True, {'state': self.state, 'message':"success"}
 
-    def _set_initial_errors(self, error_rate):
+    def _set_initial_errors(self, error_rate, mode):
         ''' Set random initial errors with an %error_rate rate
             but report only the syndrome
         '''
+        # Probabilitic mode
         # Pick random sites according to error rate
-        for q in self.state.qubit_pos:
-            if np.random.rand() < error_rate:
-                self.initial_qubits_flips.append( q )
-                self.state.act(q)
+        if mode == ErrorMode["PROBABILISTIC"]:
+            for q in self.state.qubit_pos:
+                if np.random.rand() < error_rate:
+                    self.initial_qubits_flips.append( q )
+                    self.state.act(q)
 
+        # Deterministic mode
+        # Select error_rate*n_qubits qubits to flip
+        else:
+            n_errors = int(error_rate * 2 * self.board_size * self.board_size)
+            #print("mode deterministic", n_errors)
+            for q in np.random.permutation(self.state.qubit_pos)[:n_errors]:
+                self.initial_qubits_flips.append( list(q) )
+                self.state.act(list(q))
+
+        #print(self.initial_qubits_flips)
         # Now unflip the qubits, they're a secret
         for q in self.state.qubit_pos:
             self.state.board_state[q[0],q[1]] = 0

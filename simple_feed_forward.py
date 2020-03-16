@@ -32,7 +32,7 @@ class SimpleFeedForwardNetwork(object):
 
     def activate(self, input_values):
         if len(self.layers[0].input_global_keys) > len(input_values):
-            raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.layers[0].input_global_keys.input_keys), len(inputs)))
+            raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.layers[0].input_global_keys), len(input_values)))
 
         # Create a big vector which contains the value of the nodes
         node_values = np.zeros(self.total_nodes)
@@ -98,7 +98,7 @@ class SimpleFeedForwardNetwork(object):
                             row_index = input_global_keys.index(global_ids[ikey])
                             weight_matrix[row_index][no] = genome.connections[(ikey, okey)].weight
                         else:
-                            
+
                             input_global_keys.append(global_ids[ikey])
                             weight_matrix.append(np.zeros(len(l)))
                             weight_matrix[-1][no] = genome.connections[(ikey, okey)].weight
