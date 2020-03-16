@@ -12,23 +12,23 @@ import config as cf
 config = cf.get_default_config()
 
 # Number of cross-validation
-n_runs = 2
+n_runs = 3
 
 # Grid-search parameters for training
-param_grid={'pop_size':[100],
-            'n_generations':[100],
+param_grid={'pop_size':[200],
+            'n_generations':[100, 200, 300],
             'n_games':[400],
             'epsilon':[0.1],
-            #'error_rate':[0.01, 0.05, 0.1, 0.15],
+            'error_rates':[[0.01, 0.05, 0.1, 0.15]],
             #'error_rate':[0.05, 0.1, 0.15],
             'distance':[5],
-            'connect_add_prob':[0.1, 0.01],
-            "add_node_prob":[0.1, 0.01],
-            "weight_mutate_rate":[0.5, 0.1],
+            'connect_add_prob':[0.1],
+            "add_node_prob":[0.1],
+            "weight_mutate_rate":[0.5],
             "bias_mutate_rate":[0.1],
             "compatibility_disjoint_coefficient" :[1.0],
             "compatibility_weight_coefficient" : [2.0],
-            "compatibility_threshold" : [5]
+            "compatibility_threshold" : [6]
             }
 
 # Parameters for evaluation

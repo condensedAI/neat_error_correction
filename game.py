@@ -100,7 +100,8 @@ class ToricCodeGame():
                 if mode == GameMode.TRAINING:
                     # The harder the puzzle the higher the reward and the lower the penalty
                     # The easier the puzzles the lower the reward and the higher the penalty
-                    fitness = (reward-1)*self.board_size**2 + len(self.env.initial_qubits_flips)
+                    #fitness = (reward-1)*self.board_size**2 + len(self.env.initial_qubits_flips)
+                    fitness = (reward+1)/2
                     return {"fitness": fitness, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
                 if mode == GameMode.EVALUATION:
                     return {"fitness":(reward+1)/2, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
@@ -108,7 +109,8 @@ class ToricCodeGame():
         if mode == GameMode.TRAINING:
             # The harder the puzzle the higher the reward and the lower the penalty
             # The easier the puzzles the lower the reward and the higher the penalty
-            fitness = -2*self.board_size**2 + len(self.env.initial_qubits_flips)
+            #fitness = -2*self.board_size**2 + len(self.env.initial_qubits_flips)
+            fitness = 0
             return {"fitness": fitness, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
         if mode == GameMode.EVALUATION:
             return {"fitness":0, "error_rate": error_rate, "outcome":"max_steps", "nsteps":max_step}
