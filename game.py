@@ -7,7 +7,7 @@ import neat
 from toric_game_env import ToricGameEnv
 from perspectives import Perspectives
 
-from config import GameMode
+from config import GameMode, RewardMode
 
 class ToricCodeGame():
     def __init__(self, board_size, max_steps, epsilon):
@@ -23,7 +23,7 @@ class ToricCodeGame():
     # Return the score of the game
     # In evaluation mode, the fitness is in {0, 1} corresponding to success or failure
     # In training mode, fitness can be defined differently
-    def play(self, nn, error_rate, error_mode, mode, verbose=False):
+    def play(self, nn, error_rate, error_mode, reward_mode, mode, verbose=False):
 
         current_state = self.env.generate_errors(error_rate, error_mode)
 
@@ -33,7 +33,7 @@ class ToricCodeGame():
         if mode == GameMode["TRAINING"]:
             while self.env.done and error_rate>0:
                 if self.env.reward == -1:
-                    # (Since it is not possible to correct these errors, there is no reward nor penalty)
+                    # In both reward modes BINARY or CURRICULUM, since it is not possible to correct these errors, there is no reward nor penalty
                     return {"fitness":0, "error_rate": error_rate, "outcome":"logical_error", "nsteps":0}
 
                 current_state = self.env.generate_errors(error_rate, error_mode)
@@ -94,8 +94,11 @@ class ToricCodeGame():
                 if mode == GameMode["TRAINING"]:
                     # The harder the puzzle the higher the reward and the lower the penalty
                     # The easier the puzzles the lower the reward and the higher the penalty
-                    #fitness = (reward-1)/2 + len(self.env.initial_qubits_flips)/(2*self.board_size**2)
-                    fitness = (reward+1)/2
+                    if reward_mode == RewardMode["BINARY"]:
+                        fitness = (reward+1)/2
+                    elif reward_mode == RewardMode["CURRICULUM"]:
+                        fitness = (reward-1)/2 + len(self.env.initial_qubits_flips)/(2*self.board_size**2)
+
                     return {"fitness": fitness, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
                 else:
                     return {"fitness":(reward+1)/2, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
@@ -104,8 +107,10 @@ class ToricCodeGame():
         if mode == GameMode["TRAINING"]:
             # The harder the puzzle the higher the reward and the lower the penalty
             # The easier the puzzles the lower the reward and the higher the penalty
-            #fitness = (reward-1)/2 + len(self.env.initial_qubits_flips)/(2*self.board_size**2)
-            fitness = 0
+            if reward_mode == RewardMode["BINARY"]:
+                fitness = 0
+            elif reward_mode == RewardMode["CURRICULUM"]:
+                fitness = -1 + len(self.env.initial_qubits_flips)/(2*self.board_size**2)
             return {"fitness": fitness, "error_rate": error_rate, "outcome":info["message"], "nsteps":step}
         else:
             return {"fitness":0, "error_rate": error_rate, "outcome":"max_steps", "nsteps":max_step}

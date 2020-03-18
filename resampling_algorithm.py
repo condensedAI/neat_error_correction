@@ -1,11 +1,7 @@
-import pickle
 
-from neat.reporting import BaseReporter
-from multiprocessing import Manager
 
-class CurriculumLearner(BaseReporter):
-    def __init__(self, error_rates, pop_size, n_games, fail_count):
-
+class ResamplingAlgorithm():
+    def __init__(self, error_rates, pop_size, n_games):
         self.error_rates = error_rates
         self.pop_size = pop_size
         self.n_games = n_games
@@ -13,19 +9,15 @@ class CurriculumLearner(BaseReporter):
         # Moving proportions of puzzles
         self.puzzles_proportions = {error_rate: 1/len(error_rates) for error_rate in error_rates}
         # Moving average success on puzzles
-        #self.puzzles_success = {error_rate: 1/2 for error_rate in error_rates}
-        self.fail_count = fail_count
-        for error_rate in error_rates:
-            self.fail_count[error_rate]= 0
+        self.fail_count = {error_rate: 0 for error_rate in error_rates}
 
-    def start_generation(self):
-        # Reset the puzzles success counting
+    def reset(self):
+        # Reset the puzzles failure counting
         # Very important to modify the same object in memory via a for loop
         for error_rate in self.error_rates:
             self.fail_count[error_rate] = 0
 
-
-    def end_generation(self):
+    def update(self):
         # Update the puzzle proportions
         print("Fail count", self.fail_count)
 
