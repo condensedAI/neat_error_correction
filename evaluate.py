@@ -7,7 +7,7 @@ import numpy as np
 
 import neat
 
-from config import GameMode
+from config import GameMode, RewardMode
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 
@@ -54,7 +54,7 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
     for error_rate in error_rates:
         fitness.append(0)
         for i in range(n_games):
-            result = game.play(net, error_rate, error_mode, GameMode["EVALUATION"])
+            result = game.play(net, error_rate, error_mode, RewardMode["BINARY"], GameMode["EVALUATION"])
             fitness[-1] += result["fitness"]
             #print("Result", i, result)
 

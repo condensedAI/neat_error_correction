@@ -4,12 +4,13 @@ in order to evaluate multiple genomes at once.
 """
 from multiprocessing import Pool, Lock, Value
 from multiprocessing.sharedctypes import Value
-from curriculum_learner import CurriculumLearner
+from resampling_algorithm import ResamplingAlgorithm
 
 # The existence of this class lies on the necessity
-# to share the fail_counts dictionary for curriculum learning
+# to share the fail_counts dictionary for the resampling algorithm
+# because we want to average results over the population at a given generation
 
-class ParallelEvaluatorCurriculum(object):
+class ParallelEvaluatorResampling(object):
     def __init__(self, num_workers, eval_function, error_rates, pop_size, n_games, timeout=None):
         """
         eval_function should take one argument, a tuple of
@@ -20,10 +21,9 @@ class ParallelEvaluatorCurriculum(object):
         self.eval_function = eval_function
         self.timeout = timeout
 
-        self.fail_count = {}
         self.pool = Pool(num_workers)
 
-        self.curriculum_learner = CurriculumLearner(error_rates, pop_size, n_games, self.fail_count)
+        self.resampling = ResamplingAlgorithm(error_rates, pop_size, n_games)
         #print("parallel init", id(self.fail_count))
 
     def __del__(self):
@@ -31,16 +31,20 @@ class ParallelEvaluatorCurriculum(object):
         self.pool.join()
 
     def evaluate(self, genomes, config):
-        self.curriculum_learner.start_generation()
+        self.resampling.reset()
 
         jobs = []
         for ignored_genome_id, genome in genomes:
-            jobs.append(self.pool.apply_async(self.eval_function, (genome, config, self.curriculum_learner.puzzles_proportions)))
-            
+            jobs.append(self.pool.apply_async(self.eval_function, (genome, config, self.resampling.puzzles_proportions)))
+
         # assign the fitness back to each genome
         for job, (ignored_genome_id, genome) in zip(jobs, genomes):
             genome.fitness, detailed_results = job.get(timeout=self.timeout)
-            for error_rate in self.curriculum_learner.error_rates:
-                self.fail_count[error_rate] += detailed_results[error_rate]
+            for error_rate in self.resampling.error_rates:
+                self.resampling.fail_count[error_rate] += detailed_results[error_rate]
 
-        self.curriculum_learner.end_generation()
+        self.resampling.update()
+
+        # TODO : evaluate the best genome of the whole training simulation
+        # using an independent common test set, to be able to make the comparison between generations fair
+        # since the fitness value between generation changes 

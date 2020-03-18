@@ -5,8 +5,11 @@ GameMode = {"TRAINING": 0,
 ErrorMode = {"PROBABILISTIC": 0, # The errors are generated to a binomial distribution
              "DETERMINISTIC": 1}# The number of generated errors is fixed by error_rate
 
-TrainingMode = {"NORMAL" : 0,
-                "CURRICULUM": 1}
+TrainingMode = {"NORMAL" : 0, #
+                "RESAMPLING": 1} # adapt the training dataset by resampling samples the NN struggle to solve
+
+RewardMode = {"BINARY": 0, # Reward is 1 for solved and 0 otherwise
+              "CURRICULUM": 1} # Harder problems solved are more positively rewarded, easier problems failed are more negatively rewarded
 
 # Default configuration
 def get_default_config():
@@ -17,8 +20,9 @@ def get_default_config():
 
         "Training" : {
             "n_generations" : 100,
-            "error_mode": ErrorMode["PROBABILISTIC"],
             "error_rates" : [0.01, 0.05, 0.1, 0.15],
+            "error_mode": ErrorMode["PROBABILISTIC"],
+            "reward_mode": RewardMode["BINARY"],
             "training_mode": TrainingMode["NORMAL"],
             "n_games" : 100,
             "max_steps" : 1000,
@@ -44,6 +48,7 @@ def from_arguments(args):
                   "errorMode" : "error_mode",
                   "errorRates": "error_rates",
                   "trainingMode": "training_mode",
+                  "rewardMode": "reward_mode",
                   "numPuzzles": "n_games",
                   "maxSteps": "max_steps",
                   "epsilon": "epsilon",
@@ -69,7 +74,7 @@ def from_arguments(args):
 def key_to_section(key):
     if key in ["distance"]:
         return "Physics"
-    if key in ["n_generations", "n_games", "max_steps", "epsilon", "error_rates", "error_mode", "training_mode"]:
+    if key in ["n_generations", "n_games", "max_steps", "epsilon", "error_rates", "error_mode", "training_mode", "reward_mode"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
