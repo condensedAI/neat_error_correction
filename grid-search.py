@@ -15,13 +15,13 @@ config = cf.get_default_config()
 n_runs = 3
 
 # Grid-search parameters for training
-param_grid={'pop_size':[200],
-            'n_generations':[100, 200, 300],
+param_grid={'pop_size':[100],
+            'n_generations':[300],
             'n_games':[400],
             'epsilon':[0.1],
-            'error_rates':[[0.01, 0.05, 0.1, 0.15]],
-            #'error_rate':[0.05, 0.1, 0.15],
-            'distance':[5],
+            #'error_rates':[[0.01, 0.05, 0.1, 0.15]],
+            'error_rates':[[0.11, 0.12, 0.13, 0.14]],
+            'distance':[7],
             'connect_add_prob':[0.1],
             "add_node_prob":[0.1],
             "weight_mutate_rate":[0.5],
@@ -88,7 +88,7 @@ for i, param in enumerate(parameters):
     print("Evaluating %s"%savedir)
     # In the case, multiple runs have been executed, we need to evaluate multiple models
     for winner_file in glob("%s/winner*pkl"%savedir):
-        evaluate.evaluate(winner_file, error_rates_evaluation, n_games, n_jobs=4, verbose=args.verbose)
+        evaluate.evaluate(winner_file, error_rates_evaluation, cf.ErrorMode["PROBABILISTIC"], n_games, n_jobs=4, verbose=args.verbose)
     
     # Aggregate the results
     results["mean_fitness"].append(mean(set_results))
