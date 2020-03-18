@@ -75,14 +75,20 @@ class FFNNPopulation():
                                          filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
 
         if self.training_mode == TrainingMode["RESAMPLING"]:
-            pe = ParallelEvaluatorResampling(n_cores, self.eval_genome_resampling, self.error_rates, self.config["Population"]["pop_size"], self.n_games)
+            pe = ParallelEvaluatorResampling(n_cores, self.eval_genome_resampling, self.config)
+            w=p.run(pe.evaluate, self.n_generations)
+
+            print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))
+
+            winner = pe.best_genome
         else:
             pe = neat.ParallelEvaluator(n_cores, self.eval_genome)
-
-        winner = p.run(pe.evaluate, self.n_generations)
+            winner = p.run(pe.evaluate, self.n_generations)
 
         # Display the winning genome.
         print('\nBest genome:\n{!s}'.format(winner))
+
+
 
         if verbose >1:
             # Show output of the most fit genome against training data.
