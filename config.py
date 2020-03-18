@@ -5,6 +5,8 @@ GameMode = {"TRAINING": 0,
 ErrorMode = {"PROBABILISTIC": 0, # The errors are generated to a binomial distribution
              "DETERMINISTIC": 1}# The number of generated errors is fixed by error_rate
 
+TrainingMode = {"NORMAL" : 0,
+                "CURRICULUM": 1}
 
 # Default configuration
 def get_default_config():
@@ -17,6 +19,7 @@ def get_default_config():
             "n_generations" : 100,
             "error_mode": ErrorMode["PROBABILISTIC"],
             "error_rates" : [0.01, 0.05, 0.1, 0.15],
+            "training_mode": TrainingMode["NORMAL"],
             "n_games" : 100,
             "max_steps" : 1000,
             "epsilon": 0.1
@@ -40,6 +43,7 @@ def from_arguments(args):
                   "numGenerations":"n_generations",
                   "errorMode" : "error_mode",
                   "errorRates": "error_rates",
+                  "trainingMode": "training_mode",
                   "numPuzzles": "n_games",
                   "maxSteps": "max_steps",
                   "epsilon": "epsilon",
@@ -65,7 +69,7 @@ def from_arguments(args):
 def key_to_section(key):
     if key in ["distance"]:
         return "Physics"
-    if key in ["n_generations", "n_games", "max_steps", "epsilon", "error_rates", "error_mode"]:
+    if key in ["n_generations", "n_games", "max_steps", "epsilon", "error_rates", "error_mode", "training_mode"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
