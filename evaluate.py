@@ -94,7 +94,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", nargs="+", help="Genome file to load and evaluate")
     parser.add_argument("--errorRates", type=float, nargs="+", default=np.arange(0.01, 0.16, 0.01), help="Qubit error rate")
-    parser.add_argument("--errorMode", type=int, choices=[1,2], default=1, help="Error generation mode")
+    parser.add_argument("--errorMode", type=int, choices=[0,1], default=0, help="Error generation mode")
     parser.add_argument("-n", "--numPuzzles", type=int, default=1000, help="Number of syndrome configurations to solve per individual")
     #parser.add_argument("--maxSteps", type=int, default=1000, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("-j", "--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
