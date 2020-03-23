@@ -23,7 +23,9 @@ class ToricCodeGame():
     # Return the score of the game
     # In evaluation mode, the fitness is in {0, 1} corresponding to success or failure
     # In training mode, fitness can be defined differently
-    def play(self, nn, error_rate, error_mode, reward_mode, mode, verbose=False):
+    def play(self, nn, error_rate, error_mode, reward_mode, mode, seed=None, verbose=False):
+        if not seed is None:
+            np.random.seed(seed)
 
         current_state = self.env.generate_errors(error_rate, error_mode)
 

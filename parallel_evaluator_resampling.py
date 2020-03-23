@@ -57,7 +57,7 @@ class ParallelEvaluatorResampling(object):
                 best = genome
 
         # Evaluate the best genome of the generation on the test set
-        test_score = self.test_set.evaluate(best, config)
+        test_score = self.test_set.evaluate(self.pool, best, config)
         if test_score > self.best_genome_test_score:
             # Make sure to do a deep copy
             self.best_genome = copy.copy(best)

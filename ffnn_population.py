@@ -77,7 +77,7 @@ class FFNNPopulation():
             pe = ParallelEvaluatorResampling(n_cores, self.eval_genome_resampling, self.config)
             w=p.run(pe.evaluate, self.n_generations)
 
-            print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))
+            #print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))
 
             winner = pe.best_genome
         else:
