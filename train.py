@@ -7,7 +7,7 @@ from numpy import argmax
 
 from config import *
 
-def simulate(config, savedir, n_jobs, loading_mode, verbose):
+def simulate(config, savedir, n_jobs, loading_mode, transplantation_file, verbose):
     time_id = datetime.now()
 
     if not savedir is None:
@@ -45,7 +45,7 @@ def simulate(config, savedir, n_jobs, loading_mode, verbose):
 
     population = FFNNPopulation(config)
 
-    results = population.evolve(savedir, n_jobs, ckpt_file, verbose)
+    results = population.evolve(savedir, n_jobs, ckpt_file, transplantation_file, verbose)
 
     elapsed = datetime.now() - time_id
     print("Total running time:", elapsed.seconds,":",elapsed.microseconds)
@@ -60,6 +60,7 @@ if __name__ == "__main__":
     parser.add_argument("-j", "--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2], default=0, help="Level of verbose output (higher is more)")
     parser.add_argument("--load", default=False, action="store_true", help="Loading an already existing population")
+    parser.add_argument('--transplantate', help="Genome file to transplantate the population")
 
     parser.add_argument("-L", "--distance", type=int, choices=[3,5,7], help="Toric Code Distance")
     parser.add_argument("--errorRates", type=float, nargs="+", help="Qubit error rate")
@@ -84,4 +85,4 @@ if __name__ == "__main__":
 
     print(config)
 
-    simulate(config, args.saveDir, args.numParallelJobs, args.load, args.verbose)
+    simulate(config, args.saveDir, args.numParallelJobs, args.load, args.transplantate, args.verbose)

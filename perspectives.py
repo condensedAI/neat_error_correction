@@ -19,9 +19,9 @@ class Perspectives():
                 shifted_indices = np.roll(shifted_indices, (self.size - plaq[1])%(2*self.size), axis=1)
 
                 if star_pos is None:
-                    self.perspectives[tuple(plaq)] = shifted_indices.flatten()[mask_star_operators]
+                    self.perspectives[tuple(plaq)] = shifted_indices.flatten()
                 else:
                     self.perspectives[tuple(plaq)] = shifted_indices.flatten()[mask_star_operators]
-                
+
     def shift_from(self, plaq):
         return self.perspectives[(plaq[0], plaq[1])]

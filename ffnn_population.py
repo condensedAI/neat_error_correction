@@ -1,13 +1,17 @@
 import neat
 from datetime import datetime
 import pickle
+import os
+import json
 
 from game import ToricCodeGame
 from genome_checkpointer import GenomeCheckpointer
 from config import *
 import visualize
 from simple_feed_forward import SimpleFeedForwardNetwork
-from parallel_evaluator_resampling import ParallelEvaluatorResampling
+from custom_parallel_evaluator import CustomParallelEvaluator
+from transplantation import transplantate_population
+
 
 class FFNNPopulation():
     def __init__(self, config):
@@ -41,7 +45,7 @@ class FFNNPopulation():
             new_file.write(data)
             new_file.close()
 
-    def evolve(self, savedir, n_cores=1, loading_file=None, verbose=0):
+    def evolve(self, savedir, n_cores=1, loading_file=None, transplantation_file=None, verbose=0):
         time_id = datetime.now()
 
         self.game = ToricCodeGame(self.d, self.max_steps, self.epsilon)
@@ -57,14 +61,35 @@ class FFNNPopulation():
 
             # Create the population, which is the top-level object for a NEAT run.
             p = neat.Population(population_config)
+
+            # Transplantation of genomes in the initial population
+            if not transplantation_file is None:
+                # Load the genome to be transplantate
+                if not os.path.exists(transplantation_file):
+                    raise ValueError("Genome file does not exist.")
+                with open(transplantation_file, "rb") as f:
+                    transplantated_genome = pickle.load(f)
+
+                # Load the board size of transplanted genome
+                transplanted_dir=transplantation_file[:transplantation_file.rfind("/")]
+                if not os.path.exists("%s/config.json"%transplanted_dir):
+                    raise ValueError("Configuration file does not exist (%s)."%("%s/config.json"%savedir))
+
+                with open("%s/config.json"%transplanted_dir) as f:
+                    transplantated_config = json.load(f)
+
+                transplantate_population(p=p,
+                              config_rec=population_config.genome_config,
+                              size_rec=self.config["Physics"]["distance"],
+                              genome_giv=transplantated_genome,
+                              size_giv=transplantated_config["Physics"]["distance"])
+
         else:
             p = neat.Checkpointer.restore_checkpoint(loading_file)
 
         if verbose:
             # Add a stdout reporter to show progress in the terminal.
             p.add_reporter(neat.StdOutReporter(True))
-
-            #p.add_reporter(neat.Checkpointer(5))
 
         stats = neat.StatisticsReporter()
         p.add_reporter(stats)
@@ -74,20 +99,24 @@ class FFNNPopulation():
                                          filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
 
         if self.training_mode == TrainingMode["RESAMPLING"]:
-            pe = ParallelEvaluatorResampling(n_cores, self.eval_genome_resampling, self.config)
-            w=p.run(pe.evaluate, self.n_generations)
-
-            #print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))
-
-            winner = pe.best_genome
+            pe = CustomParallelEvaluator(num_workers=n_cores,
+                                        eval_function=self.eval_genome_resampling,
+                                        do_resampling=True,
+                                        global_test_set=True,
+                                        config=self.config)
         else:
-            pe = neat.ParallelEvaluator(n_cores, self.eval_genome)
-            winner = p.run(pe.evaluate, self.n_generations)
+            pe = CustomParallelEvaluator(num_workers=n_cores,
+                                        eval_function=self.eval_genome,
+                                        do_resampling=False,
+                                        global_test_set=True,
+                                        config=self.config)
+
+        w = p.run(pe.evaluate, self.n_generations)
+        #print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))
+        winner = pe.best_genome
 
         # Display the winning genome.
         print('\nBest genome:\n{!s}'.format(winner))
-
-
 
         if verbose >1:
             # Show output of the most fit genome against training data.
@@ -106,7 +135,6 @@ class FFNNPopulation():
         self.game.close()
 
         return winner.fitness
-        #return len(stats.generation_statistics)
 
     def eval_genome(self, genome, config):
         #net = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -115,7 +143,7 @@ class FFNNPopulation():
         for i in range(self.n_games):
             # Create puzzles of varying difficulties
             error_rate = self.error_rates[i%len(self.error_rates)]
-            fitness += self.game.play(net, error_rate, self.error_mode, self.reward_mode, GameMode["TRAINING"], 0)["fitness"]
+            fitness += self.game.play(net, error_rate, self.error_mode, self.reward_mode, GameMode["TRAINING"])["fitness"]
         return fitness / self.n_games
 
     def eval_genome_resampling(self, genome, config, puzzles_proportions):
@@ -123,6 +151,7 @@ class FFNNPopulation():
         fitness = {error_rate: 0 for error_rate in self.error_rates}
         n_puzzles = {error_rate: int(self.n_games*puzzles_proportions[error_rate]) for error_rate in self.error_rates}
         fail_count = {error_rate: 0 for error_rate in self.error_rates}
+
         for error_rate in self.error_rates:
             for i in range(n_puzzles[error_rate]):
                 result = self.game.play(net, error_rate, self.error_mode, self.reward_mode, GameMode["TRAINING"])["fitness"]
@@ -130,7 +159,4 @@ class FFNNPopulation():
                 # Count the number of fails for the resampling learner
                 fail_count[error_rate] += 1 - result
 
-            #fitness[error_rate] /= n_puzzles[error_rate]
-
-        #return sum(fitness.values()) / len(self.error_rates) , fail_count
         return sum(fitness.values()) / len(self.error_rates) / self.n_games, fail_count
