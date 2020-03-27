@@ -94,6 +94,7 @@ class FFNNPopulation():
         stats = neat.StatisticsReporter()
         p.add_reporter(stats)
         p.add_reporter(neat.Checkpointer(generation_interval=100,
+                                         time_interval_seconds=None,
                                          filename_prefix="%s/checkpoint-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
         p.add_reporter(GenomeCheckpointer(generation_interval=100,
                                          filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
