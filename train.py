@@ -79,6 +79,7 @@ if __name__ == "__main__":
     parser.add_argument("--compatibilityDisjointCoefficient", type=float, help="Weight on the number of disjoint genes used when calculating genome distance")
     parser.add_argument("--compatibilityWeightCoefficient", type=float, help="Weight on the L2 distance between connections weights used when calculating genome distance")
     parser.add_argument("--compatibilityThreshold", type=float, help="Distance threshold to form species")
+
     args = parser.parse_args()
 
     config = from_arguments(args)
