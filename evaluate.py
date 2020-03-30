@@ -8,7 +8,7 @@ from multiprocessing import Pool
 
 import neat
 
-from config import GameMode, RewardMode, solve_compatibilities
+from config import GameMode, RewardMode, check_config
 from neat.nn import FeedForwardNetwork
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
@@ -30,7 +30,7 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
     with open("%s/config.json"%savedir) as f:
         config = json.load(f)
 
-    config = solve_compatibilities(config)
+    config = check_config(config)
 
     # Load the genome to be evaluated
     if not os.path.exists(file):
@@ -46,7 +46,7 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          "%s/population-config"%savedir)
 
-    #net = neat.nn.FeedForwardNetwork.create(genome, config)
+
     if config["Training"]["network_type"] == 'ffnn':
         net = SimpleFeedForwardNetwork.create(genome, population_config)
     elif config["Training"]["network_type"] == 'cppn':

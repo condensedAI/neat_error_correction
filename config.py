@@ -11,8 +11,6 @@ TrainingMode = {"NORMAL" : 0, #
 RewardMode = {"BINARY": 0, # Reward is 1 for solved and 0 otherwise
               "CURRICULUM": 1} # Harder problems solved are more positively rewarded, easier problems failed are more negatively rewarded
 
-NetworkTypes = ['ffnn', 'cppn']
-
 # Default configuration
 def get_default_config():
     return {
@@ -40,11 +38,10 @@ def get_default_config():
             "bias_mutate_rate": 0.1,
             "compatibility_disjoint_coefficient" : 1,
             "compatibility_weight_coefficient" : 2,
-            "compatibility_threshold" : 6
+            "compatibility_threshold" : 6,
+            "species_elitism": 2
         }
 }
-
-
 
 def from_arguments(args):
     config = get_default_config()
@@ -67,7 +64,8 @@ def from_arguments(args):
                   "biasMutateRate": "bias_mutate_rate",
                   "compatibilityDisjointCoefficient" : "compatibility_disjoint_coefficient",
                   "compatibilityWeightCoefficient": "compatibility_weight_coefficient",
-                  "compatibilityThreshold": "compatibility_threshold"}
+                  "compatibilityThreshold": "compatibility_threshold",
+                  "speciesElitism": "species_elitism"}
 
     for key, value in vars(args).items():
         if not value is None:
@@ -75,6 +73,7 @@ def from_arguments(args):
                 new_key = key_converts[key]
                 config[key_to_section(new_key)][new_key] = value
             except:
+                print("The key %s is not recognised for config."%str(key))
                 continue
 
     return config
@@ -88,7 +87,8 @@ def key_to_section(key):
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
-        "compatibility_weight_coefficient", "compatibility_threshold", "initial_connection"]:
+        "compatibility_weight_coefficient", "compatibility_threshold", "initial_connection",
+        "species_elitism"]:
         return "Population"
 
     raise ValueError("Missing key for %s"%key)
@@ -105,9 +105,19 @@ def solve_compatibilities(config):
 
     return default_config
 
+
 def check_config(config):
     # use assert
     if not config["Training"]["network_type"] in ['ffnn', 'cppn']:
         raise ValueError("The type of neural network should be either ffnn or cppn not %s"%config["Training"]["network_type"])
     # TODO: do the rest
-    pass
+
+    if "initial_connection" in config["Population"] and not isinstance(config["Population"]["initial_connection"], str):
+        print(config["Population"]["initial_connection"])
+        # This entry can take multiple strings, so we need to concatenate them
+        if len(config["Population"]["initial_connection"]) > 1:
+            config["Population"]["initial_connection"] = ' '.join(config["Population"]["initial_connection"])
+        else:
+            config["Population"]["initial_connection"] = config["Population"]["initial_connection"][0]
+
+    return solve_compatibilities(config)

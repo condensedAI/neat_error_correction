@@ -43,7 +43,7 @@ def simulate(config, savedir, n_jobs, loading_mode, transplantation_file, verbos
         with open("%s/config.json"%savedir, 'w') as f:
             json.dump(config, f, indent=4)
 
-
+    print(config)
     population = Population(config)
 
     results = population.evolve(savedir, n_jobs, ckpt_file, transplantation_file, verbose)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--trainingMode", type=int, choices=[0,1], help="Training mode")
     parser.add_argument("--rewardMode", type=int, choices=[0,1], help="Reward mode")
     parser.add_argument("--numGenerations", type=int, help="Number of simulated generations")
-    parser.add_argument("--initialConnection", help="Initial connection of the initial NN in the population")
+    parser.add_argument("--initialConnection", nargs="+", help="Initial connection of the initial NN in the population")
     parser.add_argument("--numPuzzles", type=int, help="Number of syndrome configurations to solve per individual")
     parser.add_argument("--maxSteps", type=int, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("--epsilon", type=float, help="Epsilon of the greedy search among perspectives results")
@@ -82,11 +82,11 @@ if __name__ == "__main__":
     parser.add_argument("--compatibilityDisjointCoefficient", type=float, help="Weight on the number of disjoint genes used when calculating genome distance")
     parser.add_argument("--compatibilityWeightCoefficient", type=float, help="Weight on the L2 distance between connections weights used when calculating genome distance")
     parser.add_argument("--compatibilityThreshold", type=float, help="Distance threshold to form species")
+    parser.add_argument("--speciesElitism", type=int, help="Minimal number of species")
 
     args = parser.parse_args()
 
     config = from_arguments(args)
-
-    check_config(config)
+    config = check_config(config)
 
     simulate(config, args.saveDir, args.numParallelJobs, args.load, args.transplantate, args.verbose)
