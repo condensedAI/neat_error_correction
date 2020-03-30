@@ -31,6 +31,8 @@ class SimpleFeedForwardNetwork(object):
         self.total_nodes = total_nodes
 
     def activate(self, input_values):
+        if len(self.layers) == 0:
+            return np.zeros(len(self.global_output_keys))
         if len(self.layers[0].input_global_keys) > len(input_values):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.layers[0].input_global_keys), len(input_values)))
 
