@@ -1,4 +1,4 @@
-from ffnn_population import FFNNPopulation
+from population import Population
 from datetime import datetime
 import argparse, json
 from glob import glob
@@ -24,11 +24,12 @@ def simulate(config, savedir, n_jobs, loading_mode, transplantation_file, verbos
 
         # Verify checkpoints exist
         if loading_mode:
-            if len(glob("%s/checkpoint*"%savedir)) == 0:
+            if len(glob("%s/checkpoint-2020*"%savedir)) == 0:
                 raise ValueError("No checkpoint to load.")
             else:
-                ckpts=glob("%s/checkpoint*"%savedir)
-                ckpt_file=ckpts[argmax(map(os.path.getmtime, ckpts))]
+                ckpts=glob("%s/checkpoint-2020*"%savedir)
+                print(list(zip(ckpts, map(os.path.getmtime, ckpts))))
+                ckpt_file=ckpts[argmax(list(map(os.path.getmtime, ckpts)))]
                 print("Loading the last edited checkpoint %s"%ckpt_file)
 
     # Otherwise we create it
@@ -43,7 +44,7 @@ def simulate(config, savedir, n_jobs, loading_mode, transplantation_file, verbos
             json.dump(config, f, indent=4)
 
 
-    population = FFNNPopulation(config)
+    population = Population(config)
 
     results = population.evolve(savedir, n_jobs, ckpt_file, transplantation_file, verbose)
 
@@ -65,10 +66,11 @@ if __name__ == "__main__":
     parser.add_argument("-L", "--distance", type=int, choices=[3,5,7], help="Toric Code Distance")
     parser.add_argument("--errorRates", type=float, nargs="+", help="Qubit error rate")
     parser.add_argument("--errorMode", type=int, choices=[0,1], help="Error generation mode")
+    parser.add_argument('--networkType', help="Type of NN to evolve")
     parser.add_argument("--trainingMode", type=int, choices=[0,1], help="Training mode")
     parser.add_argument("--rewardMode", type=int, choices=[0,1], help="Reward mode")
     parser.add_argument("--numGenerations", type=int, help="Number of simulated generations")
-    parser.add_argument("--initialConnection", help="Initial connection of the initial NN in the population")	    
+    parser.add_argument("--initialConnection", help="Initial connection of the initial NN in the population")
     parser.add_argument("--numPuzzles", type=int, help="Number of syndrome configurations to solve per individual")
     parser.add_argument("--maxSteps", type=int, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("--epsilon", type=float, help="Epsilon of the greedy search among perspectives results")
@@ -80,10 +82,11 @@ if __name__ == "__main__":
     parser.add_argument("--compatibilityDisjointCoefficient", type=float, help="Weight on the number of disjoint genes used when calculating genome distance")
     parser.add_argument("--compatibilityWeightCoefficient", type=float, help="Weight on the L2 distance between connections weights used when calculating genome distance")
     parser.add_argument("--compatibilityThreshold", type=float, help="Distance threshold to form species")
+
     args = parser.parse_args()
 
     config = from_arguments(args)
 
-    print(config)
+    check_config(config)
 
     simulate(config, args.saveDir, args.numParallelJobs, args.load, args.transplantate, args.verbose)

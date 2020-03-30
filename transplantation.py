@@ -1,12 +1,29 @@
 import neat
 import numpy as np
 
-def transplantate_population(p, config_rec, size_rec, genome_giv, size_giv):
+def transplantate_population(p, transplantation_file, config_rec, size_rec):
+    # Load the genome to be transplantate
+    if not os.path.exists(transplantation_file):
+        raise ValueError("Genome file does not exist.")
+    with open(transplantation_file, "rb") as f:
+        genome_giv = pickle.load(f)
+
+    # Load the board size of transplanted genome
+    transplanted_dir=transplantation_file[:transplantation_file.rfind("/")]
+    if not os.path.exists("%s/config.json"%transplanted_dir):
+        raise ValueError("Configuration file does not exist (%s)."%("%s/config.json"%transplanted_dir))
+
+    with open("%s/config.json"%transplanted_dir) as f:
+        transplantated_config = json.load(f)
+
+    size_giv = transplantated_config["Physics"]["distance"]
+
     for key, genome in p.population.items():
         # Clear genome
         genome.connections = {}
         genome.nodes = {}
         # Transplantate
+        # TODO: Maybe incorporate a bit of mutation, so far the population is composed of the same individual
         transplantate(config_rec, genome, size_rec, genome_giv, size_giv)
 
 # Transplantate the genome giver into the genome receiver
