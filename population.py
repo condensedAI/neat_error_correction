@@ -12,18 +12,20 @@ from genome_checkpointer import GenomeCheckpointer
 from config import *
 
 
-class FFNNPopulation():
+class Population():
     def __init__(self, config):
         self.config = config
         self.d = config["Physics"]["distance"]
         self.training_mode = config["Training"]["training_mode"]
         self.n_generations = config["Training"]["n_generations"]
+        self.network_type = config["Training"]["network_type"]
 
     def generate_config_file(self, savedir):
         # Change the config file according to the given parameters
-        with open('config-toric-code-template-ffnn') as file:
+        with open('config-toric-code-template-%s'%(self.network_type)) as file:
             data = file.read()
 
+            # This only works for ffnn, in cppn file there is no occurence of num_inputs
             data = data.replace("{num_inputs}", str(3*self.d*self.d))
 
             # Loop over the parameters of the simulation
@@ -40,8 +42,6 @@ class FFNNPopulation():
     def evolve(self, savedir, n_cores=1, loading_file=None, transplantation_file=None, verbose=0):
         time_id = datetime.now()
 
-        #self.game = ToricCodeGame(self.d, self.max_steps, self.epsilon)
-
         if loading_file is None:
             # Generate configuration file
             # TODO: No need to generate population config file each time
@@ -55,7 +55,8 @@ class FFNNPopulation():
             p = neat.Population(population_config)
 
             # Transplantation of genomes in the initial population
-            if not transplantation_file is None:
+            # TODO: adapt to hyperNEAT
+            if self.network_type == "ffnn" and not transplantation_file is None:
                 transplantate_population(p=p,
                               transplantation_file=transplantation_file,
                               config_rec=population_config.genome_config,
@@ -104,5 +105,11 @@ class FFNNPopulation():
         # Save the winner
         with open("%s/winner.genome.%s.pkl"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S')), 'wb') as f:
             pickle.dump(winner, f)
+
+        # HyperNEAT: save also the substrate
+        if (self.network_type == 'cppn'):
+            # TODO
+            pass
+
 
         return winner.fitness

@@ -1,4 +1,4 @@
-#--- parameters for the Toric Code experiment ---#
+#--- CPPN parameters for the Toric Code experiment ---#
 
 [NEAT]
 fitness_criterion     = max
@@ -8,9 +8,9 @@ reset_on_extinction   = False
 
 [DefaultGenome]
 # node activation options
-activation_default      = sigmoid
-activation_mutate_rate  = 0.0
-activation_options      = sigmoid
+activation_default      = tanh
+activation_mutate_rate  = 0.5
+activation_options      = gauss sin tanh
 
 # node aggregation options
 aggregation_default     = sum
@@ -39,7 +39,7 @@ enabled_default         = True
 enabled_mutate_rate     = 0.01
 
 feed_forward            = True
-initial_connection      = {initial_connection}
+initial_connection      = full
 
 # node add/remove rates
 node_add_prob           = {add_node_prob}
@@ -47,8 +47,8 @@ node_delete_prob        = {add_node_prob}
 
 # network parameters
 num_hidden              = 0
-num_inputs              = {num_inputs}
-num_outputs             = 4
+num_inputs              = 5
+num_outputs             = 1
 
 # node response options
 response_init_mean      = 1.0

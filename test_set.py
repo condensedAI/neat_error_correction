@@ -5,22 +5,34 @@ from multiprocessing import Pool
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 from config import ErrorMode, GameMode, RewardMode
+from phenotype_network import PhenotypeNetwork
+from substrate import Substrate
+from neat.nn import FeedForwardNetwork
 
 class TestSet():
-    def __init__(self, board_size, error_rates, n_games, max_steps):
-        self.board_size = board_size
-        self.max_steps = max_steps
-        self.error_rates = error_rates
+    def __init__(self, config, n_games):
+        self.board_size = config["Physics"]["distance"]
+        self.max_steps = config["Training"]["max_steps"]
+        self.error_rates = config["Training"]["error_rates"]
         self.n_games = n_games
+        self.network_type = config["Training"]["network_type"]
 
-        #self.game = ToricCodeGame(board_size, max_steps, epsilon=0)
+        if self.network_type == 'cppn':
+            self.substrate = Substrate(self.board_size)
+
+        self.game = ToricCodeGame(self.board_size, self.max_steps, epsilon=0)
 
         # Random seeds of the test set
         maxseed=2**32-1
         self.sample_seeds = [np.random.randint(0, maxseed) for i in range(n_games)]
 
     def evaluate(self, pool_workers, genome, config):
-        net = SimpleFeedForwardNetwork.create(genome, config)
+        if self.network_type == 'ffnn':
+            net = SimpleFeedForwardNetwork.create(genome, config)
+        elif self.network_type == 'cppn':
+            cppn_network = FeedForwardNetwork.create(genome, config)
+            net = PhenotypeNetwork.create(cppn_network, self.substrate)
+
         fitness = 0
         jobs=[]
 
@@ -37,8 +49,7 @@ class TestSet():
         return fitness / self.n_games
 
     def get_fitness(self, net, error_rate, seed):
-        game = ToricCodeGame(self.board_size, self.max_steps, epsilon=0)
-        return game.play(net, error_rate, ErrorMode["PROBABILISTIC"], RewardMode["BINARY"], GameMode["TRAINING"], seed)["fitness"]
+        return self.game.play(net, error_rate, ErrorMode["PROBABILISTIC"], RewardMode["BINARY"], GameMode["TRAINING"], seed)["fitness"]
 
         """
         def evaluate(self, pool_workers, genome, config):

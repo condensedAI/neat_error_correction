@@ -8,9 +8,12 @@ from multiprocessing import Pool
 
 import neat
 
-from config import GameMode, RewardMode
+from config import GameMode, RewardMode, solve_compatibilities
+from neat.nn import FeedForwardNetwork
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
+from phenotype_network import PhenotypeNetwork
+from substrate import Substrate
 
 
 def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
@@ -27,6 +30,8 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
     with open("%s/config.json"%savedir) as f:
         config = json.load(f)
 
+    config = solve_compatibilities(config)
+
     # Load the genome to be evaluated
     if not os.path.exists(file):
         raise ValueError("Genome file does not exist.")
@@ -42,7 +47,13 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
                          "%s/population-config"%savedir)
 
     #net = neat.nn.FeedForwardNetwork.create(genome, config)
-    net = SimpleFeedForwardNetwork.create(genome, population_config)
+    if config["Training"]["network_type"] == 'ffnn':
+        net = SimpleFeedForwardNetwork.create(genome, population_config)
+    elif config["Training"]["network_type"] == 'cppn':
+        # TODO: load substrate file instead
+        substrate = Substrate(config["Physics"]["distance"])
+        cppn_network = FeedForwardNetwork.create(genome, population_config)
+        net = PhenotypeNetwork.create(cppn_network, substrate)
 
     ## (PARALLEL) EVALUATION LOOP
     fitness = []

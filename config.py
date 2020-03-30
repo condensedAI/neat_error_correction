@@ -11,6 +11,8 @@ TrainingMode = {"NORMAL" : 0, #
 RewardMode = {"BINARY": 0, # Reward is 1 for solved and 0 otherwise
               "CURRICULUM": 1} # Harder problems solved are more positively rewarded, easier problems failed are more negatively rewarded
 
+NetworkTypes = ['ffnn', 'cppn']
+
 # Default configuration
 def get_default_config():
     return {
@@ -20,6 +22,7 @@ def get_default_config():
 
         "Training" : {
             "n_generations" : 100,
+            "network_type": 'ffnn',
             "error_rates" : [0.01, 0.05, 0.1, 0.15],
             "error_mode": ErrorMode["PROBABILISTIC"],
             "reward_mode": RewardMode["BINARY"],
@@ -30,6 +33,7 @@ def get_default_config():
         },
         "Population" : {
             "pop_size" : 50,
+            "initial_connection": 'full',
             "connect_add_prob" : 0.1,
             "add_node_prob" : 0.1,
             "weight_mutate_rate": 0.5,
@@ -40,11 +44,14 @@ def get_default_config():
         }
 }
 
+
+
 def from_arguments(args):
     config = get_default_config()
 
     key_converts={"distance":"distance",
                   "numGenerations":"n_generations",
+                  "networkType": "network_type",
                   "errorMode" : "error_mode",
                   "errorRates": "error_rates",
                   "trainingMode": "training_mode",
@@ -53,6 +60,7 @@ def from_arguments(args):
                   "maxSteps": "max_steps",
                   "epsilon": "epsilon",
                   "populationSize": "pop_size",
+                  "initialConnection": "initial_connection",
                   "connectAddProb" : "connect_add_prob",
                   "addNodeProb": "add_node_prob",
                   "weightMutateRate" : "weight_mutate_rate",
@@ -74,11 +82,32 @@ def from_arguments(args):
 def key_to_section(key):
     if key in ["distance"]:
         return "Physics"
-    if key in ["n_generations", "n_games", "max_steps", "epsilon", "error_rates", "error_mode", "training_mode", "reward_mode"]:
+    if key in ["n_generations", "n_games", "max_steps",
+                "epsilon", "error_rates", "error_mode",
+                "training_mode", "reward_mode", "network_type"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
-        "compatibility_weight_coefficient", "compatibility_threshold"]:
+        "compatibility_weight_coefficient", "compatibility_threshold", "initial_connection"]:
         return "Population"
 
     raise ValueError("Missing key for %s"%key)
+
+def solve_compatibilities(config):
+    default_config = get_default_config()
+    for key1 in default_config.keys():
+        for key2 in default_config[key1].keys():
+            if key1 in config and not key2 in config[key1]:
+                print("%s is set to the default value: %s"%(key2, str(default_config[key1][key2])))
+
+            elif key1 in config:
+                default_config[key1][key2] = config[key1][key2]
+
+    return default_config
+
+def check_config(config):
+    # use assert
+    if not config["Training"]["network_type"] in ['ffnn', 'cppn']:
+        raise ValueError("The type of neural network should be either ffnn or cppn not %s"%config["Training"]["network_type"])
+    # TODO: do the rest
+    pass

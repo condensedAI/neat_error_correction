@@ -17,6 +17,10 @@ class FitnessEvaluator(object):
         self.error_mode = config["Training"]["error_mode"]
         self.reward_mode = config["Training"]["reward_mode"]
         self.n_games = config["Training"]["n_games"]
+        self.network_type = config["Training"]["network_type"]
+
+        if self.network_type == 'cppn':
+            self.substrate = Substrate()
 
         self.game = ToricCodeGame(config["Physics"]["distance"],
                                   config["Training"]["max_steps"],
@@ -25,7 +29,12 @@ class FitnessEvaluator(object):
         self.game.close()
 
     def get(self, genome, config, puzzles_proportions):
-        net = SimpleFeedForwardNetwork.create(genome, config)
+        if self.network_type == 'ffnn':
+            net = SimpleFeedForwardNetwork.create(genome, config)
+        elif self.network_type == 'cppn':
+            cppn_net = neat.nn.FeedForwardNetwork.create(genome, config)
+            net = PhenotypeNetwork.create(cppn_net, self.substrate)
+
         fitness = {error_rate: 0 for error_rate in self.error_rates}
         n_puzzles = {error_rate: int(self.n_games*puzzles_proportions[error_rate]) for error_rate in self.error_rates}
         fail_count = {error_rate: 0 for error_rate in self.error_rates}

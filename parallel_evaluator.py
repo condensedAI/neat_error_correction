@@ -2,10 +2,12 @@
 Runs evaluation functions in parallel subprocesses
 in order to evaluate multiple genomes at once.
 """
+from neat.nn import FeedForwardNetwork
 from abstract_parallel_evaluator import AbstractParallelEvaluator
-
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
+from phenotype_network import PhenotypeNetwork
+from substrate import Substrate
 from config import GameMode
 
 # This is the object copied on each subprocess
@@ -16,6 +18,10 @@ class FitnessEvaluator(object):
         self.error_mode = config["Training"]["error_mode"]
         self.reward_mode = config["Training"]["reward_mode"]
         self.n_games = config["Training"]["n_games"]
+        self.network_type = config["Training"]["network_type"]
+
+        if self.network_type == 'cppn':
+            self.substrate = Substrate(config["Physics"]["distance"])
 
         self.game = ToricCodeGame(config["Physics"]["distance"],
                                   config["Training"]["max_steps"],
@@ -24,7 +30,12 @@ class FitnessEvaluator(object):
         self.game.close()
 
     def get(self, genome, config):
-        net = SimpleFeedForwardNetwork.create(genome, config)
+        if self.network_type == 'ffnn':
+            net = SimpleFeedForwardNetwork.create(genome, config)
+        elif self.network_type == 'cppn':
+            cppn_network = FeedForwardNetwork.create(genome, config)
+            net = PhenotypeNetwork.create(cppn_network, self.substrate)
+
         fitness = 0
         #print(id(self.game))
         for i in range(self.n_games):
@@ -45,6 +56,7 @@ class ParallelEvaluator(AbstractParallelEvaluator):
     def evaluate(self, genomes, config):
         jobs = []
         for ignored_genome_id, genome in genomes:
+            #print(genome)
             jobs.append(self.pool.apply_async(self.fitness_evaluator.get, (genome, config)))
 
         # assign the fitness back to each genome
