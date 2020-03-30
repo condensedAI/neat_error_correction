@@ -68,6 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--trainingMode", type=int, choices=[0,1], help="Training mode")
     parser.add_argument("--rewardMode", type=int, choices=[0,1], help="Reward mode")
     parser.add_argument("--numGenerations", type=int, help="Number of simulated generations")
+    parser.add_argument("--initialConnection", help="Initial connection of the initial NN in the population")	    
     parser.add_argument("--numPuzzles", type=int, help="Number of syndrome configurations to solve per individual")
     parser.add_argument("--maxSteps", type=int, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("--epsilon", type=float, help="Epsilon of the greedy search among perspectives results")

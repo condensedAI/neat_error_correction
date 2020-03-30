@@ -30,6 +30,7 @@ def get_default_config():
         },
         "Population" : {
             "pop_size" : 50,
+            "initial_connection": 'full',
             "connect_add_prob" : 0.1,
             "add_node_prob" : 0.1,
             "weight_mutate_rate": 0.5,
@@ -53,6 +54,7 @@ def from_arguments(args):
                   "maxSteps": "max_steps",
                   "epsilon": "epsilon",
                   "populationSize": "pop_size",
+                  "initialConnection": "initial_connection",
                   "connectAddProb" : "connect_add_prob",
                   "addNodeProb": "add_node_prob",
                   "weightMutateRate" : "weight_mutate_rate",
@@ -78,7 +80,7 @@ def key_to_section(key):
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
-        "compatibility_weight_coefficient", "compatibility_threshold"]:
+        "compatibility_weight_coefficient", "compatibility_threshold", "initial_connection"]:
         return "Population"
 
     raise ValueError("Missing key for %s"%key)
