@@ -51,17 +51,22 @@ class PhenotypeNetwork(object):
         return node_values[self.global_output_keys]
 
     @staticmethod
-    def query_cppn(coord1, coord2, outgoing, cppn, max_weight=5.0):
+    def query_cppn_weight(coord1, coord2, outgoing, cppn, max_weight=5.0):
         if outgoing:
-            i = [coord1[0], coord1[1], coord2[0], coord2[1], 1.0]
+            i = [coord1[0], coord1[1], coord2[0], coord2[1]]
         else:
-            i = [coord2[0], coord2[1], coord1[0], coord1[1], 1.0]
+            i = [coord2[0], coord2[1], coord1[0], coord1[1]]
         w = cppn.activate(i)[0]
 
         if abs(w) > 0.2:  # If abs(weight) is below threshold, treat weight as 0.0.
             return w * max_weight
         else:
             return 0.0
+
+    @staticmethod
+    def query_cppn_bias(coord1, cppn):
+        i = [0, 0, coord1[0], coord1[1]]
+        return cppn.activate(i)[1]
 
     @staticmethod
     def create(cppn_network, substrate):
@@ -75,21 +80,18 @@ class PhenotypeNetwork(object):
 
         # Input - Output connections
         genome_connections = {}
-
         for ikey, ipos in zip(input_keys, substrate.input_coordinates):
             for okey, opos in zip(output_keys, substrate.output_coordinates):
-                weight = PhenotypeNetwork.query_cppn(ipos, opos, True, cppn_network)
+                weight = PhenotypeNetwork.query_cppn_weight(ipos, opos, True, cppn_network)
                 if weight != 0.0:
                     genome_connections[(ikey, okey)] = DefaultConnectionGene((ikey, okey))
                     genome_connections[(ikey, okey)].enabled = True
                     genome_connections[(ikey, okey)].weight = weight
 
-        #if len(genome_connections) == 0:
-        #    raise ValueError("No connections !")
-
-        # Nodes
-        # TODO: implement bias
+        # Output nodes bias
         genome_nodes_bias = {okey : 0 for okey in output_keys}
+        for okey, opos in zip(output_keys, substrate.output_coordinates):
+            genome_nodes_bias[okey] = PhenotypeNetwork.query_cppn_bias(opos, cppn_network)
 
         # Gather expressed connections.
         connections = [cg.key for cg in genome_connections.values() if cg.enabled]
@@ -124,6 +126,8 @@ class PhenotypeNetwork(object):
             weight_matrix = []
             bias_vector = []
 
+            #print(l)
+
             # Go over the nodes in the computational layer
             for no, okey in enumerate(l):
                 output_global_keys.append(global_ids[okey])
@@ -154,8 +158,8 @@ class PhenotypeNetwork(object):
             input_global_keys=np.array(input_global_keys)
             output_global_keys=np.array(output_global_keys)
             # The factor 5 is here to match the definition of sigmoid in neat-python library
-            weight_matrix=np.matrix(weight_matrix).transpose()
-            bias_vector=np.array(bias_vector)
+            weight_matrix=5*np.matrix(weight_matrix).transpose()
+            bias_vector=5*np.array(bias_vector)
             '''
             else:
                 act_function = config.genome_config.activation_defs.get(ng.activation)

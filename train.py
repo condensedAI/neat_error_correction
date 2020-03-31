@@ -83,6 +83,8 @@ if __name__ == "__main__":
     parser.add_argument("--compatibilityWeightCoefficient", type=float, help="Weight on the L2 distance between connections weights used when calculating genome distance")
     parser.add_argument("--compatibilityThreshold", type=float, help="Distance threshold to form species")
     parser.add_argument("--speciesElitism", type=int, help="Minimal number of species")
+    parser.add_argument("--activationMutateRate", type=float, help="Activation function mutate rate")
+    parser.add_argument("--activationOptions", nargs='+', help="Set of activation functions")
 
     args = parser.parse_args()
 

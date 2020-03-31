@@ -39,7 +39,9 @@ def get_default_config():
             "compatibility_disjoint_coefficient" : 1,
             "compatibility_weight_coefficient" : 2,
             "compatibility_threshold" : 6,
-            "species_elitism": 2
+            "species_elitism": 2,
+            "activation_mutate_rate": 0,
+            "activation_options": "sigmoid"
         }
 }
 
@@ -65,7 +67,9 @@ def from_arguments(args):
                   "compatibilityDisjointCoefficient" : "compatibility_disjoint_coefficient",
                   "compatibilityWeightCoefficient": "compatibility_weight_coefficient",
                   "compatibilityThreshold": "compatibility_threshold",
-                  "speciesElitism": "species_elitism"}
+                  "speciesElitism": "species_elitism",
+                  "activationMutateRate": "activation_mutate_rate",
+                  "activationOptions": "activation_options"}
 
     for key, value in vars(args).items():
         if not value is None:
@@ -88,7 +92,7 @@ def key_to_section(key):
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
         "compatibility_weight_coefficient", "compatibility_threshold", "initial_connection",
-        "species_elitism"]:
+        "species_elitism", "activation_mutate_rate", "activation_options"]:
         return "Population"
 
     raise ValueError("Missing key for %s"%key)
@@ -119,5 +123,13 @@ def check_config(config):
             config["Population"]["initial_connection"] = ' '.join(config["Population"]["initial_connection"])
         else:
             config["Population"]["initial_connection"] = config["Population"]["initial_connection"][0]
+
+    if "activation_options" in config["Population"] and not isinstance(config["Population"]["activation_options"], str):
+        print(config["Population"]["activation_options"])
+        # This entry can take multiple strings, so we need to concatenate them
+        if len(config["Population"]["activation_options"]) > 1:
+            config["Population"]["activation_options"] = ' '.join(config["Population"]["activation_options"])
+        else:
+            config["Population"]["activation_options"] = config["Population"]["activation_options"][0]
 
     return solve_compatibilities(config)
