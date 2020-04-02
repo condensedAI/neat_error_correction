@@ -48,7 +48,7 @@ node_delete_prob        = {add_node_prob}
 # network parameters
 num_hidden              = 0
 num_inputs              = {num_inputs}
-num_outputs             = 4
+num_outputs             = {num_outputs}
 
 # node response options
 response_init_mean      = 1.0

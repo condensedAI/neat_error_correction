@@ -107,7 +107,8 @@ def get_fitness(net, config, error_rate, error_mode):
     # We need to create a different game object for each thread
     game = ToricCodeGame(board_size=config["Physics"]["distance"],
                          max_steps=config["Training"]["max_steps"],
-                         epsilon=0)
+                         epsilon=0,
+                         rotation_invariant_decoder=config["Training"]["rotation_invariant_decoder"])
 
     return game.play(net, error_rate, error_mode, RewardMode["BINARY"], GameMode["EVALUATION"])
 

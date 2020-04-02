@@ -20,7 +20,10 @@ class TestSet():
         if self.network_type == 'cppn':
             self.substrate = Substrate(self.board_size)
 
-        self.game = ToricCodeGame(self.board_size, self.max_steps, epsilon=0)
+        self.game = ToricCodeGame(self.board_size,
+                                  self.max_steps,
+                                  epsilon=0,
+                                  rotation_invariant_decoder=config["Training"]["rotation_invariant_decoder"])
 
         # Random seeds of the test set
         maxseed=2**32-1

@@ -28,6 +28,11 @@ class Population():
             # This only works for ffnn, in cppn file there is no occurence of num_inputs
             data = data.replace("{num_inputs}", str(3*self.d*self.d))
 
+            if self.config["Training"]["rotation_invariant_decoder"]:
+                data = data.replace("{num_outputs}", str(1))
+            else:
+                data = data.replace("{num_outputs}", str(4))
+
             # Loop over the parameters of the simulation
             for param_name, param_value in self.config["Population"].items():
                 # Attributes like n_games or epsilon do not appear in config template
