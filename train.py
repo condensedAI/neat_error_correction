@@ -67,6 +67,7 @@ if __name__ == "__main__":
     parser.add_argument("--errorRates", type=float, nargs="+", help="Qubit error rate")
     parser.add_argument("--errorMode", type=int, choices=[0,1], help="Error generation mode")
     parser.add_argument('--networkType', help="Type of NN to evolve")
+    parser.add_argument('--rotationInvariantDecoder', default=False, action="store_true", help="Exploiting rotation symmetry, reducing action space to 1")
     parser.add_argument("--trainingMode", type=int, choices=[0,1], help="Training mode")
     parser.add_argument("--rewardMode", type=int, choices=[0,1], help="Reward mode")
     parser.add_argument("--numGenerations", type=int, help="Number of simulated generations")

@@ -2,10 +2,13 @@
 Runs evaluation functions in parallel subprocesses
 in order to evaluate multiple genomes at once.
 """
-from neat.nn import FeedForwardNetwork
+
 from abstract_parallel_evaluator import AbstractParallelEvaluator
+
+from neat.nn import FeedForwardNetwork
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
+#from genome_conversion import convert_to_ANN_genome
 from phenotype_network import PhenotypeNetwork
 from substrate import Substrate
 from config import GameMode
@@ -25,16 +28,25 @@ class FitnessEvaluator(object):
 
         self.game = ToricCodeGame(config["Physics"]["distance"],
                                   config["Training"]["max_steps"],
-                                  config["Training"]["epsilon"])
+                                  config["Training"]["epsilon"],
+                                  config["Training"]["rotation_invariant_decoder"])
     def __del__(self):
         self.game.close()
 
     def get(self, genome, config):
+        '''
+        if self.network_type == 'ffnn':
+            genome_nn = genome # No need to copy in this case, since there is no modification
+        if self.network_type == 'cppn':
+            # Transform the CPPN genome to an ANN genome
+            genome_nn = convert_to_ANN_genome(genome, substrate, config)
+        net = SimpleFeedForwardNetwork.create(genome_nn, config)
+        '''
         if self.network_type == 'ffnn':
             net = SimpleFeedForwardNetwork.create(genome, config)
         elif self.network_type == 'cppn':
-            cppn_network = FeedForwardNetwork.create(genome, config)
-            net = PhenotypeNetwork.create(cppn_network, self.substrate)
+            cppn_net = FeedForwardNetwork.create(genome, config)
+            net = PhenotypeNetwork.create(cppn_net, self.substrate)
 
         fitness = 0
         #print(id(self.game))
@@ -43,7 +55,6 @@ class FitnessEvaluator(object):
             error_rate = self.error_rates[i%len(self.error_rates)]
             fitness += self.game.play(net, error_rate, self.error_mode, self.reward_mode, GameMode["TRAINING"])["fitness"]
         return fitness / self.n_games
-
 
 # Regular inherits from ParallelEvaluatorParent
 class ParallelEvaluator(AbstractParallelEvaluator):

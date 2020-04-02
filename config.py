@@ -21,6 +21,7 @@ def get_default_config():
         "Training" : {
             "n_generations" : 100,
             "network_type": 'ffnn',
+            'rotation_invariant_decoder': False,
             "error_rates" : [0.01, 0.05, 0.1, 0.15],
             "error_mode": ErrorMode["PROBABILISTIC"],
             "reward_mode": RewardMode["BINARY"],
@@ -51,6 +52,7 @@ def from_arguments(args):
     key_converts={"distance":"distance",
                   "numGenerations":"n_generations",
                   "networkType": "network_type",
+                  "rotationInvariantDecoder": "rotation_invariant_decoder",
                   "errorMode" : "error_mode",
                   "errorRates": "error_rates",
                   "trainingMode": "training_mode",
@@ -87,7 +89,7 @@ def key_to_section(key):
         return "Physics"
     if key in ["n_generations", "n_games", "max_steps",
                 "epsilon", "error_rates", "error_mode",
-                "training_mode", "reward_mode", "network_type"]:
+                "training_mode", "reward_mode", "network_type", "rotation_invariant_decoder"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
@@ -112,7 +114,7 @@ def solve_compatibilities(config):
 
 def check_config(config):
     # use assert
-    if not config["Training"]["network_type"] in ['ffnn', 'cppn']:
+    if "network_type" in config["Training"] and not config["Training"]["network_type"] in ['ffnn', 'cppn']:
         raise ValueError("The type of neural network should be either ffnn or cppn not %s"%config["Training"]["network_type"])
     # TODO: do the rest
 
