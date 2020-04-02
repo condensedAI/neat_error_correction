@@ -1,5 +1,8 @@
 import neat
 import numpy as np
+import os
+import pickle
+import json
 
 def transplantate_population(p, transplantation_file, config_rec, size_rec):
     # Load the genome to be transplantate
