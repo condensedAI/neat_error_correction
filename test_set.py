@@ -6,7 +6,7 @@ from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 from config import ErrorMode, GameMode, RewardMode
 from phenotype_network import PhenotypeNetwork
-from substrate import Substrate
+from substrates import *
 from neat.nn import FeedForwardNetwork
 
 class TestSet():
@@ -18,12 +18,13 @@ class TestSet():
         self.network_type = config["Training"]["network_type"]
 
         if self.network_type == 'cppn':
-            self.substrate = Substrate(self.board_size)
+            if config["Training"]["substrate_type"] == 0:
+                self.substrate = SubstrateType0(config["Physics"]["distance"])
+            if config["Training"]["substrate_type"] == 1:
+                self.substrate = SubstrateType1(config["Physics"]["distance"])
 
-        self.game = ToricCodeGame(self.board_size,
-                                  self.max_steps,
-                                  epsilon=0,
-                                  rotation_invariant_decoder=config["Training"]["rotation_invariant_decoder"])
+        self.game = ToricCodeGame(config)
+        self.game.epsilon = 0
 
         # Random seeds of the test set
         maxseed=2**32-1

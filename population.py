@@ -19,14 +19,20 @@ class Population():
         self.training_mode = config["Training"]["training_mode"]
         self.n_generations = config["Training"]["n_generations"]
         self.network_type = config["Training"]["network_type"]
+        self.substrate_type = config["Training"]["substrate_type"]
 
     def generate_config_file(self, savedir):
         # Change the config file according to the given parameters
         with open('config-toric-code-template-%s'%(self.network_type)) as file:
             data = file.read()
 
-            # This only works for ffnn, in cppn file there is no occurence of num_inputs
-            data = data.replace("{num_inputs}", str(3*self.d*self.d))
+            if self.network_type == "ffnn":
+                data = data.replace("{num_inputs}", str(3*self.d*self.d))
+            if self.network_type == "cppn":
+                if self.substrate_type == 0:
+                    data = data.replace("{num_inputs}", str(4))
+                if self.substrate_type == 1:
+                    data = data.replace("{num_inputs}", str(2))
 
             if self.config["Training"]["rotation_invariant_decoder"]:
                 data = data.replace("{num_outputs}", str(1))

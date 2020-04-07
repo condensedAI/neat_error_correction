@@ -75,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--numPuzzles", type=int, help="Number of syndrome configurations to solve per individual")
     parser.add_argument("--maxSteps", type=int, help="Number of maximum qubits flips to solve syndromes")
     parser.add_argument("--epsilon", type=float, help="Epsilon of the greedy search among perspectives results")
+    parser.add_argument("--substrateType", type=int, choices=[0, 1], help="Substrate type for hyperNEAT")
     parser.add_argument("--populationSize", type=int, help="Size of the population")
     parser.add_argument("--connectAddProb", type=float, help="Probability of adding a new connection")
     parser.add_argument("--addNodeProb", type=float, help="Probability of adding a new node")

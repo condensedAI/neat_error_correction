@@ -38,7 +38,6 @@ class SimpleFeedForwardNetwork(object):
 
         # Create a big vector which contains the value of the nodes
         node_values = np.zeros(self.total_nodes)
-        # /!\ Be careful maybe not all the input values are taken
         node_values[:len(input_values)] = input_values
 
         for l in self.layers:

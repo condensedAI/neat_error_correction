@@ -28,7 +28,8 @@ def get_default_config():
             "training_mode": TrainingMode["NORMAL"],
             "n_games" : 100,
             "max_steps" : 1000,
-            "epsilon": 0.1
+            "epsilon": 0.1,
+            "substrate_type": 0
         },
         "Population" : {
             "pop_size" : 50,
@@ -71,7 +72,8 @@ def from_arguments(args):
                   "compatibilityThreshold": "compatibility_threshold",
                   "speciesElitism": "species_elitism",
                   "activationMutateRate": "activation_mutate_rate",
-                  "activationOptions": "activation_options"}
+                  "activationOptions": "activation_options",
+                  "substrateType": "substrate_type"}
 
     for key, value in vars(args).items():
         if not value is None:
@@ -89,7 +91,8 @@ def key_to_section(key):
         return "Physics"
     if key in ["n_generations", "n_games", "max_steps",
                 "epsilon", "error_rates", "error_mode",
-                "training_mode", "reward_mode", "network_type", "rotation_invariant_decoder"]:
+                "training_mode", "reward_mode", "network_type",
+                "rotation_invariant_decoder", "substrate_type"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",

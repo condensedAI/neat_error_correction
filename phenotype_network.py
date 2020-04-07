@@ -51,11 +51,12 @@ class PhenotypeNetwork(object):
         return node_values[self.global_output_keys]
 
     @staticmethod
-    def query_cppn_weight(coord1, coord2, outgoing, cppn, max_weight=5.0):
-        if outgoing:
+    def query_cppn_weight(coord1, coord2, cppn, coord_diff=False, max_weight=5.0):
+        if not coord_diff:
             i = [coord1[0], coord1[1], coord2[0], coord2[1]]
         else:
-            i = [coord2[0], coord2[1], coord1[0], coord1[1]]
+            i = [coord1[0]-coord2[0], coord1[1]-coord2[1]]
+
         w = cppn.activate(i)[0]
 
         if abs(w) > 0.2:  # If abs(weight) is below threshold, treat weight as 0.0.
@@ -64,8 +65,11 @@ class PhenotypeNetwork(object):
             return 0.0
 
     @staticmethod
-    def query_cppn_bias(coord1, cppn):
-        i = [0, 0, coord1[0], coord1[1]]
+    def query_cppn_bias(coord2, cppn, coord_diff=False):
+        if not coord_diff:
+            i = [0, 0, coord2[0], coord2[1]]
+        else:
+            i = [coord2[0], coord2[1]]
         return cppn.activate(i)[1]
 
     @staticmethod
@@ -75,14 +79,14 @@ class PhenotypeNetwork(object):
         # Create FFNN genome from CPPN phenotype
         # TODO: Maybe not optimal
         input_keys = [-i -1 for i in range(len(substrate.input_coordinates))]
-        output_keys = [0, 1, 2, 3]
-        num_outputs = 4
+        output_keys = [i for i in range(len(substrate.output_coordinates))]
+        num_outputs = len(output_keys)
 
         # Input - Output connections
         genome_connections = {}
         for ikey, ipos in zip(input_keys, substrate.input_coordinates):
             for okey, opos in zip(output_keys, substrate.output_coordinates):
-                weight = PhenotypeNetwork.query_cppn_weight(ipos, opos, True, cppn_network)
+                weight = PhenotypeNetwork.query_cppn_weight(ipos, opos, cppn_network, substrate.with_coord_diff)
                 if weight != 0.0:
                     genome_connections[(ikey, okey)] = DefaultConnectionGene((ikey, okey))
                     genome_connections[(ikey, okey)].enabled = True
@@ -91,7 +95,7 @@ class PhenotypeNetwork(object):
         # Output nodes bias
         genome_nodes_bias = {okey : 0 for okey in output_keys}
         for okey, opos in zip(output_keys, substrate.output_coordinates):
-            genome_nodes_bias[okey] = PhenotypeNetwork.query_cppn_bias(opos, cppn_network)
+            genome_nodes_bias[okey] = PhenotypeNetwork.query_cppn_bias(opos, cppn_network, substrate.with_coord_diff)
 
         # Gather expressed connections.
         connections = [cg.key for cg in genome_connections.values() if cg.enabled]

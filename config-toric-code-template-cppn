@@ -47,7 +47,7 @@ node_delete_prob        = {add_node_prob}
 
 # network parameters
 num_hidden              = 0
-num_inputs              = 4
+num_inputs              = {num_inputs}
 num_outputs             = 2
 
 # node response options

@@ -8,7 +8,7 @@ class Perspectives():
         if remove_star_op:
             # Mask array of the star operator locations in the board array
             b = Board(board_size)
-            mask_star_operators = [not [x,y] in b.star_pos for x in range(2*board_size) for y in range(2*board_size)]
+            self.mask_star_operators = [not [x,y] in b.star_pos for x in range(2*board_size) for y in range(2*board_size)]
 
         # Generate rotation symmetries
         # To make sure the lattice is in the right convention
@@ -35,7 +35,7 @@ class Perspectives():
                         tranformed_indices = np.roll(tranformed_indices, 1, axis)
 
                     if remove_star_op:
-                        self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()[mask_star_operators]
+                        self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()[self.mask_star_operators]
                     else:
                         self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()
 

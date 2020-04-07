@@ -10,7 +10,7 @@ from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 #from genome_conversion import convert_to_ANN_genome
 from phenotype_network import PhenotypeNetwork
-from substrate import Substrate
+from substrates import *
 from config import GameMode
 
 # This is the object copied on each subprocess
@@ -24,12 +24,13 @@ class FitnessEvaluator(object):
         self.network_type = config["Training"]["network_type"]
 
         if self.network_type == 'cppn':
-            self.substrate = Substrate(config["Physics"]["distance"])
+            if config["Training"]["substrate_type"] == 0:
+                self.substrate = SubstrateType0(config["Physics"]["distance"])
+            if config["Training"]["substrate_type"] == 1:
+                self.substrate = SubstrateType1(config["Physics"]["distance"])
 
-        self.game = ToricCodeGame(config["Physics"]["distance"],
-                                  config["Training"]["max_steps"],
-                                  config["Training"]["epsilon"],
-                                  config["Training"]["rotation_invariant_decoder"])
+        self.game = ToricCodeGame(config)
+        
     def __del__(self):
         self.game.close()
 

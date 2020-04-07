@@ -13,7 +13,7 @@ from neat.nn import FeedForwardNetwork
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 from phenotype_network import PhenotypeNetwork
-from substrate import Substrate
+from substrates import *
 
 
 def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
@@ -50,8 +50,10 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
     if config["Training"]["network_type"] == 'ffnn':
         net = SimpleFeedForwardNetwork.create(genome, population_config)
     elif config["Training"]["network_type"] == 'cppn':
-        # TODO: load substrate file instead
-        substrate = Substrate(config["Physics"]["distance"])
+        if config["Training"]["substrate_type"] == 0:
+            substrate = SubstrateType0(config["Physics"]["distance"])
+        elif config["Training"]["substrate_type"] == 1:
+            substrate = SubstrateType1(config["Physics"]["distance"])
         cppn_network = FeedForwardNetwork.create(genome, population_config)
         net = PhenotypeNetwork.create(cppn_network, substrate)
 
@@ -105,10 +107,7 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
 
 def get_fitness(net, config, error_rate, error_mode):
     # We need to create a different game object for each thread
-    game = ToricCodeGame(board_size=config["Physics"]["distance"],
-                         max_steps=config["Training"]["max_steps"],
-                         epsilon=0,
-                         rotation_invariant_decoder=config["Training"]["rotation_invariant_decoder"])
+    game = ToricCodeGame(config)
 
     return game.play(net, error_rate, error_mode, RewardMode["BINARY"], GameMode["EVALUATION"])
 

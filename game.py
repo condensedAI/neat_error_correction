@@ -10,11 +10,13 @@ from perspectives import Perspectives
 from config import GameMode, RewardMode
 
 class ToricCodeGame():
-    def __init__(self, board_size, max_steps, epsilon, rotation_invariant_decoder=False):
-        self.board_size = board_size
-        self.max_steps = max_steps
-        self.epsilon = epsilon
-        self.rotation_invariant_decoder = rotation_invariant_decoder
+    def __init__(self, config):
+        self.board_size = config["Physics"]["distance"]
+        self.max_steps = config["Training"]["max_steps"]
+        self.epsilon = config["Training"]["epsilon"]
+        self.network_type = config["Training"]["network_type"]
+        self.substrate_type = config["Training"]["substrate_type"]
+        self.rotation_invariant_decoder = config["Training"]["rotation_invariant_decoder"]
 
         self.env = ToricGameEnv(self.board_size)
 
@@ -56,51 +58,16 @@ class ToricCodeGame():
         for step in range(self.max_steps+1):
             current_state = current_state.flatten()
 
-            probs=[]
-            actions=[]
-
-            # Go over perspectives
-            for plaq in self.env.state.syndrome_pos:
-                # 4 possible actions
-                # Bad convention for action order, but we must keep for retrocompatibility
-                qubit_flips=[]
-                qubit_flips += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
-                qubit_flips += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
-                qubit_flips += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
-                qubit_flips += [[plaq[0], (plaq[1]-1)%(2*self.board_size)]]
-
+            if self.network_type == 'ffnn':
                 if not self.rotation_invariant_decoder:
-                    # Shift the board to center the syndrome
-                    # Also includes masking of star operators
-                    indices = self.perspectives.shift_from(plaq)
-
-                    input = current_state[indices]
-
-                    probs += list(nn.activate(input))
-
-                    # Output has 4 neurons
-                    actions += qubit_flips
-
-                elif self.rotation_invariant_decoder:
-                    # And rotation of the board if asked
-                    # With order corresponding the rotation
-                    qubit_flips_rotationally_ordered=[]
-                    qubit_flips_rotationally_ordered += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
-                    qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]-1)%(2*self.board_size)]]
-                    qubit_flips_rotationally_ordered += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
-                    qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
-
-                    for rot_i in range(4):
-                        indices = self.perspectives.shift_from(plaq, rot_i)
-
-                        input = current_state[indices]
-
-                        probs += list(nn.activate(input))
-                        # Output has 4 neurons
-                        actions += [qubit_flips_rotationally_ordered[rot_i]]
-
-
-            #print(len(probs), len(actions))
+                    probs, actions = self._get_actions_with_perspectives(nn, current_state)
+                else:
+                    probs, actions = self._get_actions_with_perspectives_rotation_invariant(nn, current_state)
+            elif self.network_type == 'cppn':
+                if self.substrate_type == 0:
+                    probs, actions = self._get_actions_with_perspectives(nn, current_state)
+                elif self.substrate_type == 1:
+                    probs, actions = self._get_actions(nn, current_state)
 
             # To avoid calling rand() when evaluating (for testing purposes)
             if self.epsilon == 0 or mode == GameMode["EVALUATION"]:
@@ -146,6 +113,64 @@ class ToricCodeGame():
         else:
             return {"fitness":0, "error_rate": error_rate, "outcome":"max_steps", "nsteps":max_step}
 
+
+    # In this case, the output layer has 4 nodes
+    def _get_actions_with_perspectives(self, nn, current_state):
+        # Go over perspectives
+        actions, probs=[], []
+        for plaq in self.env.state.syndrome_pos:
+            # Shift the board to center the syndrome
+            # Also includes masking of star operators
+            indices = self.perspectives.shift_from(plaq)
+
+            input = current_state[indices]
+
+            # NN outputs 4 values
+            probs += list(nn.activate(input))
+
+            # 4 possible actions
+            # Bad convention for action order, but we must keep for retrocompatibility
+            actions += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
+            actions += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
+            actions += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
+            actions += [[plaq[0], (plaq[1]-1)%(2*self.board_size)]]
+
+        return probs, actions
+
+    # In this case, the output layer has 1 node
+    def _get_actions_with_perspectives_rotation_invariant(self, nn, current_state):
+        # Rotation  order corresponding the 90degree anti-clockwise rotation
+        qubit_flips_rotationally_ordered=[]
+        qubit_flips_rotationally_ordered += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
+        qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]-1)%(2*self.board_size)]]
+        qubit_flips_rotationally_ordered += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
+        qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
+
+        # Go over syndromes
+        for plaq in self.env.state.syndrome_pos:
+            for rot_i in range(4):
+                indices = self.perspectives.shift_from(plaq, rot_i)
+
+                input = current_state[indices]
+
+                # NN outputs 1 value
+                probs += list(nn.activate(input))
+
+                actions += [qubit_flips_rotationally_ordered[rot_i]]
+
+        return probs, actions
+
+    # In this case, output layer has 2*board_size**2 (# of spins) nodes
+    def _get_actions(self, nn, current_state):
+        indices = self.perspectives.mask_star_operators
+
+        input = current_state[indices]
+
+        probs = list(nn.activate(input))
+
+        actions = self.env.state.qubit_pos
+
+        return probs, actions
 
     def close(self):
         self.env.close()
