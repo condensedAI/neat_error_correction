@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool
+import multiprocessing
 
 import neat
 
@@ -16,10 +17,10 @@ from phenotype_network import PhenotypeNetwork
 from substrates import *
 
 
-def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
-    time_id = datetime.now()
 
-    #np.random.seed(0)
+
+def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose, file_suffix):
+    time_id = datetime.now()
 
     # Load the corresponding config files
     savedir = file[:file.rfind("/")]
@@ -59,58 +60,61 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose):
 
     ## (PARALLEL) EVALUATION LOOP
     fitness = []
-    results={"fitness":[], "error_rate":[], "outcome":[], "nsteps":[]}
-    pool = Pool(n_jobs)
+    results={"fitness":[], "error_rate":[], "outcome":[], "nsteps":[], "initial_qubits_flips":[]}
+    
+    # with statement to close properly the parallel processes
+    with Pool(n_jobs) as pool:
+        # Game evaluation
+        for error_rate in error_rates:
+            fitness.append(0)
 
-    # Game evaluation
-    for error_rate in error_rates:
-        fitness.append(0)
+            jobs=[]
+            for i in range(n_games):
+                # 
+                jobs.append(pool.apply_async(get_fitness, (net, config, error_rate, error_mode)))
 
-        jobs=[]
-        for i in range(n_games):
-            jobs.append(pool.apply_async(get_fitness, (net, config, error_rate, error_mode)))
+            for job in jobs:
+                output, errors_id = job.get(timeout=None)
 
-        for job in jobs:
-            output = job.get(timeout=None)
+                fitness[-1] += output["fitness"]
+                for k, v in output.items():
+                    results[k].append(v)
+                results["initial_qubits_flips"].append(errors_id)
 
-            fitness[-1] += output["fitness"]
-            for k, v in output.items():
-                results[k].append(v)
+            fitness[-1] /= n_games
+            print("Evaluation on error_rate=%.2f is done."%error_rate)
 
-        fitness[-1] /= n_games
-        print("Evaluation on error_rate=%.2f is done."%error_rate)
+        elapsed = datetime.now() - time_id
+        print("Total running time:", elapsed.seconds,":",elapsed.microseconds)
 
-    elapsed = datetime.now() - time_id
-    print("Total running time:", elapsed.seconds,":",elapsed.microseconds)
+        # Always overwrite the result of evaluation
+        # Synthesis report
+        savefile = "%s_evaluation.ngames=%i.errormode=%i.%s.csv"%(file.replace(".pkl", ""), n_games, error_mode, file_suffix)
+        if os.path.exists(savefile):
+            print("Deleting evaluation file %s"%savefile)
+            os.remove(savefile)
 
-    # Always overwrite the result of evaluation
-    # Synthesis report
-    savefile = "%s_evaluation.ngames=%i.errormode=%i.csv"%(file.replace(".pkl", ""), n_games, error_mode)
-    if os.path.exists(savefile):
-        print("Deleting evaluation file %s"%savefile)
-        os.remove(savefile)
+        print([error_rates, fitness])
+        df = pd.DataFrame(list(zip(error_rates, fitness)), columns=["error_rate", "mean_fitness"])
+        df.to_csv(savefile)
 
-    print([error_rates, fitness])
-    df = pd.DataFrame(list(zip(error_rates, fitness)), columns=["error_rate", "mean_fitness"])
-    df.to_csv(savefile)
+        # Detailed report
+        savefile = "%s_detailed_results_evaluation.ngames=%i.%s.csv"%(file.replace(".pkl", ""), n_games, file_suffix)
+        if os.path.exists(savefile):
+            print("Deleting evaluation file %s"%savefile)
+            os.remove(savefile)
 
-    # Detailed report
-    savefile = "%s_detailed_results_evaluation.ngames=%i.csv"%(file.replace(".pkl", ""), n_games)
-    if os.path.exists(savefile):
-        print("Deleting evaluation file %s"%savefile)
-        os.remove(savefile)
-
-    pd.DataFrame.from_dict(results).to_csv(savefile)
-
+        pd.DataFrame.from_dict(results).to_csv(savefile)
 
     return error_rates, fitness
 
-def get_fitness(net, config, error_rate, error_mode):
+def get_fitness(net, config, error_rate, error_mode, seed=None):
     # We need to create a different game object for each thread
     game = ToricCodeGame(config)
-
-    return game.play(net, error_rate, error_mode, RewardMode["BINARY"], GameMode["EVALUATION"])
-
+    res = game.play(net, error_rate, error_mode, RewardMode["BINARY"], GameMode["EVALUATION"], seed)
+    initial_errors = ['1' if i in game.env.initial_qubits_flips else '0' for i in game.env.state.qubit_pos] 
+    error_id = int(''.join(initial_errors),2)
+    return res, error_id
 
 if __name__ == "__main__":
     # Parse arguments passed to the program (or set defaults)
@@ -120,9 +124,10 @@ if __name__ == "__main__":
     parser.add_argument("--errorMode", type=int, choices=[0,1], default=0, help="Error generation mode")
     parser.add_argument("-n", "--numPuzzles", type=int, default=1000, help="Number of syndrome configurations to solve per individual")
     #parser.add_argument("--maxSteps", type=int, default=1000, help="Number of maximum qubits flips to solve syndromes")
-    parser.add_argument("-j", "--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel")
+    parser.add_argument("-j", "--numParallelJobs", type=int, default=1, help="Number of jobs launched in parallel") 
+    parser.add_argument("--id", default="", help="File additional id")
     parser.add_argument("-v", "--verbose", type=int, choices=[0,1,2], default=0, help="Level of verbose output (higher is more)")
     args = parser.parse_args()
 
     for file in args.file:
-        evaluate(file, args.errorRates, args.errorMode, args.numPuzzles, args.numParallelJobs, args.verbose)
+        evaluate(file, args.errorRates, args.errorMode, args.numPuzzles, args.numParallelJobs, args.verbose, args.id)

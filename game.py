@@ -19,6 +19,11 @@ class ToricCodeGame():
         self.rotation_invariant_decoder = config["Training"]["rotation_invariant_decoder"]
 
         self.env = ToricGameEnv(self.board_size)
+        
+        # Very important to change the seed here
+        # Otherwise for game evaluation in parallel
+        # All game objects will share the same seed leading to biased results
+        np.random.seed()
 
         # The perspective includes the masking of star operators
         self.perspectives = Perspectives(self.board_size, remove_star_op=True)
@@ -27,8 +32,8 @@ class ToricCodeGame():
     # In evaluation mode, the fitness is in {0, 1} corresponding to success or failure
     # In training mode, fitness can be defined differently
     def play(self, nn, error_rate, error_mode, reward_mode, mode, seed=None, verbose=False):
-        if not seed is None:
-            np.random.seed(seed)
+        #if not seed is None:
+        #    np.random.seed(seed)
 
         current_state = self.env.generate_errors(error_rate, error_mode)
 
