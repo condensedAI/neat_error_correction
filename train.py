@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--load", default=False, action="store_true", help="Loading an already existing population")
     parser.add_argument('--transplantate', help="Genome file to transplantate the population")
 
-    parser.add_argument("-L", "--distance", type=int, choices=[3,5,7], help="Toric Code Distance")
+    parser.add_argument("-L", "--distance", type=int, choices=[3,5,7,9,11], help="Toric Code Distance")
     parser.add_argument("--errorRates", type=float, nargs="+", help="Qubit error rate")
     parser.add_argument("--errorMode", type=int, choices=[0,1], help="Error generation mode")
     parser.add_argument('--networkType', help="Type of NN to evolve")

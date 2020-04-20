@@ -7,6 +7,9 @@ from resampling_algorithm import ResamplingAlgorithm
 
 from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
+from neat.nn import FeedForwardNetwork
+from phenotype_network import PhenotypeNetwork
+from substrates import *
 from config import GameMode
 
 # This is the object copied on each subprocess
@@ -20,11 +23,13 @@ class FitnessEvaluator(object):
         self.network_type = config["Training"]["network_type"]
 
         if self.network_type == 'cppn':
-            self.substrate = Substrate()
+            if config["Training"]["substrate_type"] == 0:
+                self.substrate = SubstrateType0(config["Physics"]["distance"], config["Training"]["rotation_invariant_decoder"])
+            if config["Training"]["substrate_type"] == 1:
+                self.substrate = SubstrateType1(config["Physics"]["distance"])
 
-        self.game = ToricCodeGame(config["Physics"]["distance"],
-                                  config["Training"]["max_steps"],
-                                  config["Training"]["epsilon"])
+        self.game = ToricCodeGame(config)
+
     def __del__(self):
         self.game.close()
 
@@ -32,7 +37,7 @@ class FitnessEvaluator(object):
         if self.network_type == 'ffnn':
             net = SimpleFeedForwardNetwork.create(genome, config)
         elif self.network_type == 'cppn':
-            cppn_net = neat.nn.FeedForwardNetwork.create(genome, config)
+            cppn_net = FeedForwardNetwork.create(genome, config)
             net = PhenotypeNetwork.create(cppn_net, self.substrate)
 
         fitness = {error_rate: 0 for error_rate in self.error_rates}

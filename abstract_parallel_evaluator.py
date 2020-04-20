@@ -28,6 +28,7 @@ class AbstractParallelEvaluator(object):
     def test(self, generation_best, config):
         # Evaluate the best genome of the generation on the test set
         test_score = self.test_set.evaluate(self.pool, generation_best, config)
+        print("Current generation best test score: %0.2f"%test_score)
         if test_score > self.best_genome_test_score:
             # Make sure to do a deep copy
             self.best_genome = copy.copy(generation_best)

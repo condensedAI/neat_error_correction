@@ -73,7 +73,7 @@ class PhenotypeNetwork(object):
         return cppn.activate(i)[1]
 
     @staticmethod
-    def create(cppn_network, substrate):
+    def create(cppn_network, substrate, connection_weight_scale=1):
         """ Receives a CPPN genome and returns its NN phenotype (a FeedForwardNetwork). """
 
         # Create FFNN genome from CPPN phenotype
@@ -82,11 +82,13 @@ class PhenotypeNetwork(object):
         output_keys = [i for i in range(len(substrate.output_coordinates))]
         num_outputs = len(output_keys)
 
+        #print(len(substrate.input_coordinates))
+
         # Input - Output connections
         genome_connections = {}
         for ikey, ipos in zip(input_keys, substrate.input_coordinates):
             for okey, opos in zip(output_keys, substrate.output_coordinates):
-                weight = PhenotypeNetwork.query_cppn_weight(ipos, opos, cppn_network, substrate.with_coord_diff)
+                weight = connection_weight_scale * PhenotypeNetwork.query_cppn_weight(ipos, opos, cppn_network, substrate.with_coord_diff)
                 if weight != 0.0:
                     genome_connections[(ikey, okey)] = DefaultConnectionGene((ikey, okey))
                     genome_connections[(ikey, okey)].enabled = True

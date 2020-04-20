@@ -19,7 +19,7 @@ class ToricCodeGame():
         self.rotation_invariant_decoder = config["Training"]["rotation_invariant_decoder"]
 
         self.env = ToricGameEnv(self.board_size)
-        
+
         # Very important to change the seed here
         # Otherwise for game evaluation in parallel
         # All game objects will share the same seed leading to biased results
@@ -63,16 +63,13 @@ class ToricCodeGame():
         for step in range(self.max_steps+1):
             current_state = current_state.flatten()
 
-            if self.network_type == 'ffnn':
+            if self.network_type == 'cppn' and self.substrate_type == 1:
+                probs, actions = self._get_actions(nn, current_state)
+            else:
                 if not self.rotation_invariant_decoder:
                     probs, actions = self._get_actions_with_perspectives(nn, current_state)
                 else:
                     probs, actions = self._get_actions_with_perspectives_rotation_invariant(nn, current_state)
-            elif self.network_type == 'cppn':
-                if self.substrate_type == 0:
-                    probs, actions = self._get_actions_with_perspectives(nn, current_state)
-                elif self.substrate_type == 1:
-                    probs, actions = self._get_actions(nn, current_state)
 
             # To avoid calling rand() when evaluating (for testing purposes)
             if self.epsilon == 0 or mode == GameMode["EVALUATION"]:
@@ -134,7 +131,7 @@ class ToricCodeGame():
             probs += list(nn.activate(input))
 
             # 4 possible actions
-            # Bad convention for action order, but we must keep for retrocompatibility
+            # Bad convention for action order, but we must keep it for retrocompatibility
             actions += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
             actions += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
             actions += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
@@ -144,15 +141,17 @@ class ToricCodeGame():
 
     # In this case, the output layer has 1 node
     def _get_actions_with_perspectives_rotation_invariant(self, nn, current_state):
-        # Rotation  order corresponding the 90degree anti-clockwise rotation
-        qubit_flips_rotationally_ordered=[]
-        qubit_flips_rotationally_ordered += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
-        qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]-1)%(2*self.board_size)]]
-        qubit_flips_rotationally_ordered += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
-        qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
 
         # Go over syndromes
+        actions, probs=[], []
         for plaq in self.env.state.syndrome_pos:
+            # Rotation  order corresponding the 90degree anti-clockwise rotation
+            qubit_flips_rotationally_ordered=[]
+            qubit_flips_rotationally_ordered += [[(plaq[0]+1)%(2*self.board_size), plaq[1]]]
+            qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]-1)%(2*self.board_size)]]
+            qubit_flips_rotationally_ordered += [[(plaq[0]-1)%(2*self.board_size), plaq[1]]]
+            qubit_flips_rotationally_ordered += [[plaq[0], (plaq[1]+1)%(2*self.board_size)]]
+
             for rot_i in range(4):
                 indices = self.perspectives.shift_from(plaq, rot_i)
 

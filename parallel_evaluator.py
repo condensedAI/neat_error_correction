@@ -25,12 +25,12 @@ class FitnessEvaluator(object):
 
         if self.network_type == 'cppn':
             if config["Training"]["substrate_type"] == 0:
-                self.substrate = SubstrateType0(config["Physics"]["distance"])
+                self.substrate = SubstrateType0(config["Physics"]["distance"], config["Training"]["rotation_invariant_decoder"])
             if config["Training"]["substrate_type"] == 1:
                 self.substrate = SubstrateType1(config["Physics"]["distance"])
 
         self.game = ToricCodeGame(config)
-        
+
     def __del__(self):
         self.game.close()
 

@@ -34,6 +34,7 @@ class Population():
                 if self.substrate_type == 1:
                     data = data.replace("{num_inputs}", str(2))
 
+            # No {num_outputs} occurence in config file for cppn
             if self.config["Training"]["rotation_invariant_decoder"]:
                 data = data.replace("{num_outputs}", str(1))
             else:
