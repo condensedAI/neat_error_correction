@@ -37,9 +37,7 @@ class TestSet():
             cppn_network = FeedForwardNetwork.create(genome, config)
             net = PhenotypeNetwork.create(cppn_network, self.substrate)
 
-        fitness = 0
         jobs=[]
-
         for i in range(self.n_games):
             # Create puzzles of varying difficulties
             error_rate = self.error_rates[i%len(self.error_rates)]
@@ -47,14 +45,18 @@ class TestSet():
             seed = self.sample_seeds[i]
             jobs.append(pool_workers.apply_async(self.get_fitness, (net, error_rate, seed)))
 
+        fitness = {err: 0 for err in self.error_rates}
         for job in jobs:
-            fitness += job.get(timeout=None)
+            res, error_rate = job.get(timeout=None)
+            fitness[error_rate] += res
 
-        return fitness / self.n_games
+        total_fitness = sum(fitness.values()) / self.n_games
+        details = [fitness[err]*len(self.error_rates)/ self.n_games for err in self.error_rates]
+        return total_fitness, details
 
     def get_fitness(self, net, error_rate, seed):
-        return self.game.play(net, error_rate, ErrorMode["PROBABILISTIC"], RewardMode["BINARY"], GameMode["TRAINING"], seed)["fitness"]
-
+        results = self.game.play(net, error_rate, ErrorMode["PROBABILISTIC"], RewardMode["BINARY"], GameMode["TRAINING"], seed)
+        return results["fitness"], results['error_rate']
         """
         def evaluate(self, pool_workers, genome, config):
             net = SimpleFeedForwardNetwork.create(genome, config)

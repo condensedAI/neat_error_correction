@@ -88,15 +88,19 @@ class Population():
                                          filename_prefix="%s/checkpoint-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
         p.add_reporter(GenomeCheckpointer(generation_interval=100,
                                          filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
-
+        # TODO: checkpointer is cleaner for reporting best genome performance
+        #p.add_reporter(Test)
+                                         
         if self.training_mode == TrainingMode["RESAMPLING"]:
             pe = ParallelEvaluatorResampling(num_workers=n_cores,
                                              global_test_set=True,
-                                             config=self.config)
+                                             config=self.config,
+                                             savedir=savedir)
         else:
             pe = ParallelEvaluator(num_workers=n_cores,
                                    global_test_set=True,
-                                   config=self.config)
+                                   config=self.config,
+                                   savedir=savedir)
 
         w = p.run(pe.evaluate, self.n_generations)
         #print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))

@@ -50,6 +50,7 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose, file_suffi
 
     if config["Training"]["network_type"] == 'ffnn':
         net = SimpleFeedForwardNetwork.create(genome, population_config)
+        code_distance = config["Physics"]["distance"]
     elif config["Training"]["network_type"] == 'cppn':
         # HyperNEAT: possibility of evaluating a CPPN trained on d=3 data on d>3 data
         if transfer_to_distance is None:
