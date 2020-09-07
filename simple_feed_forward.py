@@ -30,15 +30,22 @@ class SimpleFeedForwardNetwork(object):
         self.global_output_keys = global_output_keys
         self.total_nodes = total_nodes
 
+        # Stored variables to avoid reevaluation in activate
+        self.n_layers = len(layers)
+        self.n_nodes_first_layer = len(layers[0].input_global_keys) if len(layers)>0 else 0
+
+
     def activate(self, input_values):
-        if len(self.layers) == 0:
+        if self.n_layers == 0:
             return np.zeros(len(self.global_output_keys))
-        if len(self.layers[0].input_global_keys) > len(input_values):
+        if self.n_nodes_first_layer > len(input_values):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.layers[0].input_global_keys), len(input_values)))
 
         # Create a big vector which contains the value of the nodes
+        # Note: it is not faster to have node_values as a class variable
         node_values = np.zeros(self.total_nodes)
         node_values[:len(input_values)] = input_values
+
 
         for l in self.layers:
             # Compute the vector of values of the next layer
@@ -46,20 +53,31 @@ class SimpleFeedForwardNetwork(object):
 
             node_values[l.output_global_keys] = l.act_function(values)
 
+
         return node_values[self.global_output_keys]
 
     @staticmethod
     def create(genome, config):
         """ Receives a genome and returns its phenotype (a FeedForwardNetwork). """
 
+        # Ideas for optimization
+        # - profiling the code
+        # - memoization
+        # - use contiguous array in memory
+
         # Gather expressed connections.
         connections = [cg.key for cg in genome.connections.values() if cg.enabled]
 
+        # TODO: remove this call to feed_forward_layers
+        # Because some work done in this function is done again here
         computational_layers = feed_forward_layers(config.genome_config.input_keys, config.genome_config.output_keys, connections)
 
         # Insert the input layer as the first layer
         # It matters that the input layer is inserted as a list and not a set, otherwise ordering'd be messed up
         computational_layers.insert(0, config.genome_config.input_keys)
+
+        # TODO: visited_nodes can be a set instead of a list, might speed-up
+        # OrderedSet ?
         visited_nodes = copy.copy(config.genome_config.input_keys)
 
         # Each entry of the dict stores the global id of a node
@@ -126,6 +144,5 @@ class SimpleFeedForwardNetwork(object):
                 bias_vector=np.array(bias_vector)
 
             build_layers.append(Layer(input_global_keys, output_global_keys, weight_matrix, bias_vector, act_function))
-
 
         return SimpleFeedForwardNetwork(build_layers, global_OUT_keys, global_count)

@@ -15,7 +15,8 @@ from game import ToricCodeGame
 from simple_feed_forward import SimpleFeedForwardNetwork
 from phenotype_network import PhenotypeNetwork
 from substrates import *
-
+from config import generate_config_file
+from transplantation import transplantate
 
 
 
@@ -49,7 +50,26 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose, file_suffi
 
 
     if config["Training"]["network_type"] == 'ffnn':
-        net = SimpleFeedForwardNetwork.create(genome, population_config)
+        if transfer_to_distance is None:
+            net = SimpleFeedForwardNetwork.create(genome, population_config)
+            code_distance = config["Physics"]["distance"]
+        elif transfer_to_distance > config["Physics"]["distance"]:
+
+            generate_config_file(savedir, config, transfer_to_distance)
+
+            pop_config_transferred = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                 neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                 savedir+"/population-config-temp-d"+str(transfer_to_distance))
+
+            new_genome = pop_config_transferred.genome_type(0)
+            new_genome.configure_new(pop_config_transferred.genome_config)
+            new_genome.connections = {}
+            new_genome.nodes = {}
+
+            transplantate(pop_config_transferred.genome_config, new_genome, transfer_to_distance, genome, config["Physics"]["distance"])
+            net = SimpleFeedForwardNetwork.create(new_genome, pop_config_transferred)
+            code_distance = transfer_to_distance
+
     elif config["Training"]["network_type"] == 'cppn':
         # HyperNEAT: possibility of evaluating a CPPN trained on d=3 data on d>3 data
         if transfer_to_distance is None:
@@ -71,7 +91,6 @@ def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose, file_suffi
         #print(code_distance, connection_weight_scale)
         cppn_network = FeedForwardNetwork.create(genome, population_config)
         net = PhenotypeNetwork.create(cppn_network, substrate, connection_weight_scale)
-
 
     # DIRTY: To ensure that samples are generated according to transfer_to_distance
     config["Physics"]["distance"] = code_distance

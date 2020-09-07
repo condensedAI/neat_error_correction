@@ -60,8 +60,8 @@ class FitnessEvaluator(object):
 # because we want to average results over the population at a given generation
 
 class ParallelEvaluatorResampling(AbstractParallelEvaluator):
-    def __init__(self, num_workers, config, global_test_set=True, timeout=None):
-        super().__init__(num_workers, config, global_test_set, timeout)
+    def __init__(self, num_workers, config, savedir, global_test_set=True, timeout=None):
+        super().__init__(num_workers, config, savedir, global_test_set, timeout)
 
         # Resampling
         self.resampling = ResamplingAlgorithm(config["Training"]["error_rates"], config["Population"]["pop_size"], config["Training"]["n_games"])

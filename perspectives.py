@@ -2,13 +2,20 @@ import numpy as np
 from toric_game_env import Board
 
 class Perspectives():
-    def __init__(self, board_size, remove_star_op):
+    def __init__(self, board_size, remove_star_op, remove_qubits=False):
         self.size = board_size
 
+
+        # Mask array of the star operator locations in the board array
+        b = Board(board_size)
         if remove_star_op:
-            # Mask array of the star operator locations in the board array
-            b = Board(board_size)
-            self.mask_star_operators = [not [x,y] in b.star_pos for x in range(2*board_size) for y in range(2*board_size)]
+            self.mask = [not [x,y] in b.star_pos for x in range(2*board_size) for y in range(2*board_size)]
+        if remove_qubits:
+            self.mask = [not [x,y] in b.qubit_pos for x in range(2*board_size) for y in range(2*board_size)]
+        if remove_star_op and remove_qubits:
+            self.mask = [not [x,y] in b.qubit_pos and not [x,y] in b.star_pos for x in range(2*board_size) for y in range(2*board_size)]
+
+        #print(self.mask)
 
         # Generate rotation symmetries
         # To make sure the lattice is in the right convention
@@ -34,10 +41,13 @@ class Perspectives():
                     for axis in rolling_axis_after_rotation[rot_i]:
                         tranformed_indices = np.roll(tranformed_indices, 1, axis)
 
-                    if remove_star_op:
-                        self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()[self.mask_star_operators]
-                    else:
-                        self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()
+                    self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()[self.mask]
+
+                    #print(len(tranformed_indices.flatten()[self.mask]))
+                    #if remove_star_op:
+                    #    self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()[self.mask]
+                    #else:
+                    #    self.perspectives[rot_i][tuple(plaq)] = tranformed_indices.flatten()
 
     # Return the indices of the new lattice shifted such that the syndrome is placed at the central plaquette
     # Also allows for returning the reflected indices given by rotation_number

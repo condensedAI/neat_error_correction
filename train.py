@@ -87,7 +87,8 @@ if __name__ == "__main__":
     parser.add_argument("--speciesElitism", type=int, help="Minimal number of species")
     parser.add_argument("--activationMutateRate", type=float, help="Activation function mutate rate")
     parser.add_argument("--activationOptions", nargs='+', help="Set of activation functions")
-
+    parser.add_argument("--memory", default=True, action='store_true')
+    parser.add_argument("--noMemory", dest='memory', action='store_false')
     args = parser.parse_args()
 
     config = from_arguments(args)

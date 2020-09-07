@@ -275,3 +275,21 @@ class Board(object):
         '''
         img = np.array(self.board_state)
         return img
+
+    def image_view(self, number=False):
+        image = np.array(self.board_state, dtype=object)
+        for i, plaq in enumerate(self.plaquet_pos):
+            if image[plaq[0], plaq[1]] == 1:
+                image[plaq[0], plaq[1]] = "P"+str(i) if number else "P"
+            elif image[plaq[0], plaq[1]] == 0:
+                image[plaq[0], plaq[1]] = "x"+str(i) if number else "x"
+        for i,plaq in enumerate(self.star_pos):
+            if image[plaq[0], plaq[1]] == 1:
+                image[plaq[0], plaq[1]] = "S"+str(i) if number else "S"
+            elif image[plaq[0], plaq[1]] == 0:
+                image[plaq[0], plaq[1]] = "+"+str(i) if number else "+"
+
+        for i,pos in enumerate(self.qubit_pos):
+            image[pos[0], pos[1]] = str(int(image[pos[0], pos[1]]))+str(i) if number else str(int(image[pos[0], pos[1]]))
+
+        return np.array(image)
