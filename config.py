@@ -21,6 +21,7 @@ def get_default_config():
         "Training" : {
             "n_generations" : 100,
             "network_type": 'ffnn',
+            "memory": True,
             'rotation_invariant_decoder': False,
             "error_rates" : [0.01, 0.05, 0.1, 0.15],
             "error_mode": ErrorMode["PROBABILISTIC"],
@@ -53,6 +54,7 @@ def from_arguments(args):
     key_converts={"distance":"distance",
                   "numGenerations":"n_generations",
                   "networkType": "network_type",
+                  'memory': 'memory',
                   "rotationInvariantDecoder": "rotation_invariant_decoder",
                   "errorMode" : "error_mode",
                   "errorRates": "error_rates",
@@ -92,7 +94,7 @@ def key_to_section(key):
     if key in ["n_generations", "n_games", "max_steps",
                 "epsilon", "error_rates", "error_mode",
                 "training_mode", "reward_mode", "network_type",
-                "rotation_invariant_decoder", "substrate_type"]:
+                "rotation_invariant_decoder", "substrate_type", "memory"]:
         return "Training"
     if key in ["pop_size", "connect_add_prob", "add_node_prob",
         "weight_mutate_rate", "bias_mutate_rate", "compatibility_disjoint_coefficient",
@@ -138,3 +140,38 @@ def check_config(config):
             config["Population"]["activation_options"] = config["Population"]["activation_options"][0]
 
     return solve_compatibilities(config)
+
+def generate_config_file(savedir, cf, distance=None):
+    # Change the config file according to the given parameters
+    with open('config-toric-code-template-%s'%(cf["Training"]["network_type"])) as file:
+        data = file.read()
+
+        if cf["Training"]["network_type"] == "ffnn":
+            input_size=3 if cf["Training"]["memory"] else 1
+            input_size*= cf["Physics"]["distance"]**2 if distance is None else distance**2
+            data = data.replace("{num_inputs}", str(input_size))
+        if cf["Training"]["network_type"] == "cppn":
+            if cf["Training"]["substrate_type"] == 0:
+                data = data.replace("{num_inputs}", str(4))
+            if cf["Training"]["substrate_type"] == 1:
+                data = data.replace("{num_inputs}", str(2))
+
+        # No {num_outputs} occurence in config file for cppn
+        if cf["Training"]["rotation_invariant_decoder"]:
+            data = data.replace("{num_outputs}", str(1))
+        else:
+            data = data.replace("{num_outputs}", str(4))
+
+        # Loop over the parameters of the simulation
+        for param_name, param_value in cf["Population"].items():
+            # Attributes like n_games or epsilon do not appear in config template
+            # So no need to check
+            data = data.replace("{"+param_name+"}", str(param_value))
+
+        # Create a config file corresponding to these settings
+        if distance is None:
+            new_file = open(savedir+"/population-config", "w")
+        else:
+            new_file = open(savedir+"/population-config-temp-d"+str(distance), "w")
+        new_file.write(data)
+        new_file.close()

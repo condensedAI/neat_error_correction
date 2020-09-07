@@ -37,7 +37,7 @@ def transplantate(config_rec, genome_rec, size_rec, genome_giv, size_giv):
     # Look-up table for the nodes in genome_giv
     lookup_keys = {}
 
-    # Create node genes for the output pins.
+    # Create node genes for the output keys
     for node_key in config_rec.output_keys:
         new_node = genome_rec.create_node(config_rec, node_key)
         new_node.bias = genome_giv.nodes[node_key].bias
@@ -97,3 +97,17 @@ def transplantate(config_rec, genome_rec, size_rec, genome_giv, size_giv):
         connection.weight = genome_giv.connections[input_id, output_id].weight
         connection.enabled = genome_giv.connections[input_id, output_id].enabled
         genome_rec.connections[connection.key] = connection
+
+    #print([(key, conn.weight) for key, conn in genome_rec.connections.items()])
+
+    # Add other 0-weight (negligible) connections
+    for i in range(len(to_copy_mask)):
+        input_id = -i-1
+        for node in genome_rec.nodes:
+            if np.random.rand() < 0.5 and not (input_id, node) in genome_rec.connections:
+                connection = genome_rec.create_connection(config_rec, input_id, node)
+                connection.weight = 0
+                connection.enabled = True
+                genome_rec.connections[connection.key] = connection
+
+    #print([(key, conn.weight) for key, conn in genome_rec.connections.items()])

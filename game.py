@@ -26,7 +26,9 @@ class ToricCodeGame():
         np.random.seed()
 
         # The perspective includes the masking of star operators
-        self.perspectives = Perspectives(self.board_size, remove_star_op=True)
+        self.perspectives = Perspectives(self.board_size,
+                                        remove_star_op=True,
+                                        remove_qubits=not config["Training"]["memory"])
 
     # Return the score of the game
     # In evaluation mode, the fitness is in {0, 1} corresponding to success or failure
