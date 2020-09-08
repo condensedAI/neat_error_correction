@@ -20,7 +20,7 @@ from transplantation import transplantate
 
 
 
-def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose, file_suffix, transfer_to_distance):
+def evaluate(file, error_rates, error_mode, n_games, n_jobs, verbose, file_suffix='', transfer_to_distance=None):
     time_id = datetime.now()
 
     # Load the corresponding config files
