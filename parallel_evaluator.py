@@ -59,8 +59,8 @@ class FitnessEvaluator(object):
 
 # Regular inherits from ParallelEvaluatorParent
 class ParallelEvaluator(AbstractParallelEvaluator):
-    def __init__(self, num_workers, config, savedir, global_test_set=True, timeout=None):
-        super().__init__(num_workers, config, savedir, global_test_set, timeout)
+    def __init__(self, num_workers, config, savedir, file_id, global_test_set=True, timeout=None):
+        super().__init__(num_workers, config, savedir, file_id, global_test_set, timeout)
 
         # This is object copied on each core
         self.fitness_evaluator = FitnessEvaluator(config)

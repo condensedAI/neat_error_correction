@@ -52,11 +52,12 @@ class Population():
 
         stats = neat.StatisticsReporter()
         p.add_reporter(stats)
+        file_id = time_id.strftime('%Y-%m-%d_%H-%M-%S')
         p.add_reporter(neat.Checkpointer(generation_interval=100,
                                          time_interval_seconds=None,
-                                         filename_prefix="%s/checkpoint-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
+                                         filename_prefix="%s/checkpoint-%s-"%(savedir, file_id)))
         p.add_reporter(GenomeCheckpointer(generation_interval=100,
-                                         filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, time_id.strftime('%Y-%m-%d_%H-%M-%S'))))
+                                         filename_prefix="%s/checkpoint-best-genome-%s-"%(savedir, file_id)))
         # TODO: checkpointer is cleaner for reporting best genome performance
         #p.add_reporter(Test)
 
@@ -64,12 +65,14 @@ class Population():
             pe = ParallelEvaluatorResampling(num_workers=n_cores,
                                              global_test_set=True,
                                              config=self.config,
-                                             savedir=savedir)
+                                             savedir=savedir,
+                                             file_id=file_id)
         else:
             pe = ParallelEvaluator(num_workers=n_cores,
                                    global_test_set=True,
                                    config=self.config,
-                                   savedir=savedir)
+                                   savedir=savedir,
+                                   file_id=file_id)
 
         w = p.run(pe.evaluate, self.n_generations)
         #print("Check best test scores: %.2f vs %.2f"%(pe.test_set.evaluate(w, population_config), pe.best_genome_test_score))

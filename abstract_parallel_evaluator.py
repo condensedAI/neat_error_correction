@@ -10,7 +10,7 @@ from test_set import TestSet
 
 #
 class AbstractParallelEvaluator(object):
-    def __init__(self, num_workers, config, savedir, global_test_set=True, timeout=None):
+    def __init__(self, num_workers, config, savedir, file_id, global_test_set=True, timeout=None):
         self.num_workers = num_workers
         self.timeout = timeout
         self.pool = Pool(num_workers)
@@ -24,6 +24,7 @@ class AbstractParallelEvaluator(object):
             self.recording = pd.DataFrame(columns=self.test_set.error_rates)
             self.gen_counter = 0
             self.savedir = savedir
+            self.file_id = file_id
 
     def __del__(self):
         self.pool.close() # should this be terminate?
@@ -34,7 +35,7 @@ class AbstractParallelEvaluator(object):
         self.gen_counter += 1
         test_score, details = self.test_set.evaluate(self.pool, generation_best, config)
         self.recording.loc[self.gen_counter] = details
-        self.recording.to_csv("%s/recording_best.csv"%(self.savedir))
+        self.recording.to_csv("%s/recording_best-%s.csv"%(self.savedir, self.file_id))
         print("Current generation best test score: %0.2f"%test_score)
         if test_score > self.best_genome_test_score:
             # Make sure to do a deep copy
